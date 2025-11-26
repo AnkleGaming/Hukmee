@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Icons (add these later for PWA) -->
+    <!-- <link rel="manifest" href="/manifest.json" /> -->
+    <!-- <link rel="icon" href="/favicon.ico" /> -->
+    <!-- <link rel="apple-touch-icon" href="/logo192.png" /> -->
+
+    <title>Hukmee</title>
+
+    <!-- Razorpay Checkout (must be loaded before your app in many cases) -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+    <!-- NoSleep.js - Keeps screen awake during order tracking -->
+    <script src="https://cdn.jsdelivr.net/npm/nosleep.js@0.12.0/dist/NoSleep.min.js"></script>
+  </head>
+
+  <body class="antialiased">
+    <div id="root"></div>
+
+    <script type="module" src="/src/main.jsx"></script>
+
+    <!-- Prevent screen sleep on mobile when user interacts -->
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        // Only initialize NoSleep if it exists and we're on a mobile device
+        if (typeof NoSleep !== "undefined") {
+          const noSleep = new NoSleep();
+
+          // Enable wake lock on first user interaction (required by browsers)
+          const enableWakeLock = () => {
+            noSleep.enable();
+            document.removeEventListener("click", enableWakeLock);
+            document.removeEventListener("touchstart", enableWakeLock);
+            console.log("Wake lock enabled - screen will stay on");
+          };
+
+          document.addEventListener("click", enableWakeLock, { once: true });
+          document.addEventListener("touchstart", enableWakeLock, { once: true });
+        }
+      });
+    </script>
+  </body>
+</html>
