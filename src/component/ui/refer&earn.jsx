@@ -24,7 +24,7 @@ const ReferAndEarn = () => {
     if (navigator.share) {
       navigator
         .share({
-          title: "Join Our WePretiffy",
+          title: "Join Our Hukmee Platform!",
           text: "Invite your friends to join our courses and earn exciting rewards!",
           url: window.location.href,
         })
@@ -58,8 +58,8 @@ const ReferAndEarn = () => {
           Refer & Earn
         </h2>
         <p className="text-sm sm:text-base text-gray-600 text-center mb-6">
-          Invite your friends to join our Weprettify and earn exciting rewards
-          for every successful referral!
+          Invite your friends to join our Hukmee and earn exciting rewards for
+          every successful referral!
         </p>
 
         {/* Referral Code Section */}

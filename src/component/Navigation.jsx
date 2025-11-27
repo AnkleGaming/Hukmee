@@ -173,14 +173,21 @@ const Navigation = () => {
             <div className="hidden md:flex items-center space-x-10 text-lg font-medium">
               {[
                 { to: "/", label: "Home" },
-                { to: "/course", label: "Career" },
+                {
+                  to: "https://hukmee-vendor-chi.vercel.app/",
+                  label: "Career",
+                  external: true,
+                },
                 { to: "/productscreen", label: "New" },
                 { to: "/usedproduct", label: "Used" },
               ].map((item) =>
-                item.to.startsWith("#") ? (
+                item.external ? (
+                  // Open external link in NEW TAB
                   <a
                     key={item.label}
                     href={item.to}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className={`relative text-gray-700 hover:text-${Colors.primaryMain} transition-colors duration-300 group`}
                   >
                     {item.label}
@@ -189,6 +196,7 @@ const Navigation = () => {
                     ></span>
                   </a>
                 ) : (
+                  // Internal route using React Router
                   <Link
                     key={item.label}
                     to={item.to}

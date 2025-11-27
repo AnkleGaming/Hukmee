@@ -1,18 +1,14 @@
-// src/components/cart/cartsummury.jsx
+// src/components/cart/CartSummary.jsx
 import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import Colors from "../../core/constant";
+import { ShoppingBag, ArrowRight, Sparkles } from "lucide-react";
 
-const CartSummary = ({
-  total,
-  cartItems,
-  customButtonText, // Optional: override button text
-  customOnClick, // Optional: override click behavior
-}) => {
+const CartSummary = ({ total, cartItems, customButtonText, customOnClick }) => {
   const navigate = useNavigate();
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
+  const [isMobile] = useState(window.innerWidth < 640);
 
-  // Calculate total discount (if DiscountPrice exists)
+  // Calculate savings
   const totalDiscount = useMemo(() => {
     return cartItems.reduce((acc, item) => {
       const original = Number(item.Price) || 0;
@@ -22,72 +18,85 @@ const CartSummary = ({
     }, 0);
   }, [cartItems]);
 
-  // Total quantity of items (e.g. 2 shirts + 3 pants = 5 items)
   const totalItemsQty = useMemo(() => {
     return cartItems.reduce((sum, item) => sum + Number(item.Quantity || 0), 0);
   }, [cartItems]);
 
-  // Default click handler (navigate to payment)
   const handleClick =
     customOnClick ||
     (() => {
       navigate("/paymentpage", {
-        state: {
-          cartItems,
-          total,
-          totalDiscount,
-        },
+        state: { cartItems, total, totalDiscount },
       });
     });
 
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 640);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
   if (!cartItems || cartItems.length === 0) return null;
-  // Desktop Summary (inside cart drawer)
-  const DesktopSummary = () => (
-    <div className="w-full p-5 bg-white border-t border-gray-200">
-      <div className="space-y-3 mb-5">
-        <div className="flex justify-between text-lg font-semibold text-gray-900">
-          <span>
-            {customButtonText?.includes("Update")
-              ? "Reorder Total"
-              : "Subtotal"}
+
+  return (
+    <div className="bg-gradient-to-b from-white to-orange-50/30 border-t border-gray-200">
+      <div className="p-5 sm:p-6 space-y-5">
+        {/* Subtotal & Items */}
+
+        {/* CTA Button */}
+        <button
+          onClick={handleClick}
+          className={`
+            w-full relative overflow-hidden
+            bg-gradient-to-r from-orange-500 via-orange-600 to-red-600
+            hover:from-orange-600 hover:to-red-700
+            text-white font-bold text-lg p-5 rounded-2xl
+            shadow-xl hover:shadow-2xl transform hover:scale-[1.02]
+            transition-all duration-300 flex items-center justify-center gap-4
+            group
+          `}
+        >
+          {/* Shiny effect */}
+          <div className="absolute inset-0 bg-white opacity-20 translate-x-[-100%] group-hover:translate-x-full transition-transform duration-1000" />
+
+          <span className="text-[13px] md:text-xl ">
+            ₹{Number(total).toFixed(2)}
           </span>
-          <span>₹{Number(total).toFixed(2)}</span>
-        </div>
 
-        {totalDiscount > 0 && (
-          <div className="flex justify-between text-sm text-green-600 font-medium">
-            <span>You Saved</span>
-            <span>₹{totalDiscount.toFixed(2)}</span>
-          </div>
-        )}
+          <span className="border-l-2 border-white/40 flex items-center gap-3 text-[13px] md:text-xl">
+            {customButtonText || "Proceed to Pay"}
+            <ArrowRight className="group-hover:translate-x-1 transition-transform w-[20px] h-[20px] mr-2" />
+          </span>
+        </button>
 
-        <div className="flex justify-between text-sm text-gray-600">
-          <span>Total Items</span>
-          <span>
-            {totalItemsQty} Item{totalItemsQty !== 1 ? "s" : ""}
+        {/* Trust badges */}
+        <div className="flex items-center justify-center gap-6 text-xs text-gray-500 pt-3 border-t border-gray-100">
+          <span className="flex items-center gap-1">
+            <svg
+              className="w-4 h-4 text-green-500"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fillRule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                clipRule="evenodd"
+              />
+            </svg>
+            Secure Payment
+          </span>
+          <span className="flex items-center gap-1">
+            <svg
+              className="w-4 h-4 text-green-500"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fillRule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                clipRule="evenodd"
+              />
+            </svg>
+            Fast Delivery
           </span>
         </div>
       </div>
-
-      <button
-        onClick={handleClick}
-        className={`w-full bg-gradient-to-r ${Colors.primaryFrom} ${Colors.primaryTo} text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-3 hover:cursor-pointer `}
-      >
-        <span>₹{Number(total).toFixed(2)}</span>
-        <span className="border-l border-white/30 pl-3">
-          {customButtonText || "Proceed to Pay →"}
-        </span>
-      </button>
     </div>
   );
-
-  return <DesktopSummary />;
 };
 
 export default CartSummary;

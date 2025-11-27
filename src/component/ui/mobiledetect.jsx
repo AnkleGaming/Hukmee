@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Colors from "../../core/constant";
+import SendNotification from "../../backend/notify/notify";
 
 // 🧩 Common model codes → real names
 const modelMap = {
@@ -64,6 +65,7 @@ const getPrettyModelName = (code) => {
 const MobileDetect = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [deviceModel, setDeviceModel] = useState("Detecting...");
+  const phone = localStorage.getItem("userPhone");
 
   // ✅ Detect using both User-Agent & modern API (UA Client Hints)
   const detectDeviceModel = async () => {
@@ -123,6 +125,16 @@ const MobileDetect = () => {
     return () => window.removeEventListener("resize", checkScreen);
   }, []);
 
+  const handleSendNotification = async (phone, model) => {
+    if (!phone) return;
+    try {
+      const response = await SendNotification(phone, model);
+      console.log("Device notification response:", response);
+    } catch (err) {
+      console.error("Error sending device notification:", err);
+    }
+  };
+
   const sharedStyles = {
     container: "w-full flex items-center justify-center py-8",
     card: "bg-orange-50 shadow-lg rounded-xl border border-gray-200 flex flex-col items-center text-center p-6 max-w-sm w-full",
@@ -133,11 +145,16 @@ const MobileDetect = () => {
 
   const DeviceCard = ({ title, subtitle }) => (
     <div className={sharedStyles.container}>
-      <div className={`${sharedStyles.card} p-8`}>
-        <div className={sharedStyles.title}>{title}</div>
-        <div className={sharedStyles.model}>{deviceModel}</div>
-        {/* <div className={sharedStyles.subtitle}>{subtitle}</div> */}
-      </div>
+      <button
+        onClick={() => handleSendNotification(phone, deviceModel)}
+        className="hover:cursor-pointer "
+      >
+        <div className={`${sharedStyles.card} p-8`}>
+          <div className={sharedStyles.title}>{title}</div>
+          <div className={sharedStyles.model}>{deviceModel}</div>
+          {/* <div className={sharedStyles.subtitle}>{subtitle}</div> */}
+        </div>
+      </button>
     </div>
   );
 

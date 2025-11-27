@@ -357,6 +357,102 @@ const PaymentPage = () => {
     }
   };
 
+  const handleOnlinePayment = async () => {
+    if (!isLoggedIn) return alert("Please login first");
+    if (!selectedAddress) return alert("Please select address");
+    if (finalPayable <= 0) return alert("Invalid amount");
+
+    setLoading(true);
+
+    // Load Razorpay SDK if not already loaded
+    const loadRazorpay = () => {
+      return new Promise((resolve) => {
+        if (window.Razorpay) return resolve();
+
+        const script = document.createElement("script");
+        script.src = "https://checkout.razorpay.com/v1/checkout.js";
+        script.onload = () => resolve();
+        script.onerror = () => alert("Failed to load payment gateway");
+        document.body.appendChild(script);
+      });
+    };
+
+    try {
+      await loadRazorpay();
+
+      const options = {
+        key: "rzp_test_RkTL7QV0DSn6sD", // Your test key (or live key later)
+        amount: finalPayable * 100, // in paise
+        currency: "INR",
+        name: "Hukmee",
+        description: "Service Booking Payment",
+        image: "https://your-logo.png", // optional
+        handler: async function (response) {
+          // This runs when payment is SUCCESSFUL
+          const paymentId = response.razorpay_payment_id;
+
+          // Mark order as Paid (you already have UpdateOrder)
+          try {
+            await UpdateOrder({
+              OrderID: orderId,
+              Price: finalPayable,
+              Quantity: getTotalQuantity(),
+              Address: selectedAddress.FullAddress,
+              Slot: isProduct ? "N/A" : selectedSlot?.slotName || "N/A",
+              Status: "Placed",
+              PaymentMethod: "Online (Razorpay)",
+              PaymentID: paymentId, // optional: save payment ID
+            });
+
+            // Deduct wallet if used
+            if (useWalletFlag && walletUsed > 0) {
+              const remaining = walletBalance - walletUsed;
+              await UpdateWallet(UserID, remaining);
+            }
+
+            alert(`Payment Successful! 🎉\nPayment ID: ${paymentId}`);
+            navigate("/");
+          } catch (err) {
+            alert("Payment done but order update failed. Contact support.");
+            console.error(err);
+          }
+        },
+        prefill: {
+          name: selectedAddress?.Name || "Customer",
+          contact: UserID,
+          email: "customer@example.com",
+        },
+        notes: {
+          order_id: orderId,
+          user_phone: UserID,
+        },
+        theme: {
+          color: "#4C6EF5",
+        },
+        modal: {
+          ondismiss: function () {
+            setLoading(false);
+            alert("Payment cancelled");
+          },
+        },
+      };
+
+      const razorpay = new window.Razorpay(options);
+      razorpay.open();
+
+      // On payment failure
+      razorpay.on("payment.failed", function (response) {
+        alert("Payment Failed: " + response.error.description);
+        console.log(response.error);
+        setLoading(false);
+      });
+    } catch (error) {
+      alert("Payment gateway error");
+      console.error(error);
+      setLoading(false);
+    }
+  };
+
   const handleMainProceed = () => {
     if (isProduct) {
       openPaymentModal(finalPayable);
@@ -428,7 +524,7 @@ const PaymentPage = () => {
               <button
                 onClick={() => {
                   onClose();
-                  handleproceed(finalPayable, useWalletFlag, walletUsed);
+                  handleOnlinePayment();
                 }}
                 disabled={loading}
                 className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white py-3 rounded-xl font-medium hover:shadow-lg transition text-sm disabled:opacity-70"

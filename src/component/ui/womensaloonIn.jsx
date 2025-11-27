@@ -563,7 +563,7 @@ const WomenSaloonIn = () => {
           </div>
         </div>
 
-        <div className="flex flex-col md:flex-row lg:flex-row gap-4 lg:gap-6 h-full">
+        <div className="flex flex-col md:flex-row lg:flex-row gap-4 lg:gap-[40px] h-full">
           <div className="flex flex-col gap-4 flex-shrink-0">
             <SelectServiceCardSection
               subService={subService}

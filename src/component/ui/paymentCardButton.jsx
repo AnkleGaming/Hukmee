@@ -10,6 +10,8 @@ const PaymentCardButton = ({ itemTotal = 0, onProceed, loading = false }) => {
   const [cartItems, setCartItems] = useState([]);
   const [walletBalance, setWalletBalance] = useState(0);
   const [useWallet, setUseWallet] = useState(false);
+  const [orderType, setOrderType] = useState(null);
+  const isProduct = orderType === "Product";
 
   // ------------------------------
   // FETCH WALLET BALANCE
@@ -37,6 +39,7 @@ const PaymentCardButton = ({ itemTotal = 0, onProceed, loading = false }) => {
     const fetchCart = async () => {
       try {
         const data = await GetOrder(UserID, "Pending");
+        setOrderType(data[0].OrderType || null);
         setCartItems(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error(err);
@@ -59,7 +62,8 @@ const PaymentCardButton = ({ itemTotal = 0, onProceed, loading = false }) => {
   // ------------------------------
   // APPLY WALLET
   // ------------------------------
-  const walletUsed = useWallet ? Math.min(walletBalance, finalTotal) : 0;
+  const walletUsed =
+    isProduct && useWallet ? Math.min(walletBalance, finalTotal) : 0;
   const payableAmount = finalTotal - walletUsed;
 
   // 🔥 SEND DATA TO PARENT AUTOMATICALLY
@@ -108,36 +112,39 @@ const PaymentCardButton = ({ itemTotal = 0, onProceed, loading = false }) => {
       </div>
 
       {/* Wallet Section */}
-      <div className="p-3 mt-3 rounded-xl bg-gray-50 border border-gray-200">
-        <div className="flex justify-between items-center">
-          <div>
-            <p className="text-sm text-gray-600">Wallet Balance</p>
-            <p className="text-lg font-bold text-green-600">
-              {fmt(walletBalance)}
-            </p>
+      {/* Wallet Section (Only for Product orders) */}
+      {isProduct && (
+        <div className="p-3 mt-3 rounded-xl bg-gray-50 border border-gray-200">
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="text-sm text-gray-600">Wallet Balance</p>
+              <p className="text-lg font-bold text-green-600">
+                {fmt(walletBalance)}
+              </p>
+            </div>
+
+            {/* Tick Button */}
+            <button
+              onClick={() => setUseWallet(!useWallet)}
+              className={`w-7 h-7 flex items-center justify-center rounded-full border ${
+                useWallet ? "bg-green-500 border-green-600" : "border-gray-300"
+              }`}
+            >
+              <CheckCircle
+                className={`w-5 h-5 ${
+                  useWallet ? "text-white" : "text-gray-400"
+                }`}
+              />
+            </button>
           </div>
 
-          {/* Tick Button */}
-          <button
-            onClick={() => setUseWallet(!useWallet)}
-            className={`w-7 h-7 flex items-center justify-center rounded-full border ${
-              useWallet ? "bg-green-500 border-green-600" : "border-gray-300"
-            }`}
-          >
-            <CheckCircle
-              className={`w-5 h-5 ${
-                useWallet ? "text-white" : "text-gray-400"
-              }`}
-            />
-          </button>
+          {useWallet && (
+            <p className="text-xs text-green-600 mt-1">
+              Wallet Applied: {fmt(walletUsed)}
+            </p>
+          )}
         </div>
-
-        {useWallet && (
-          <p className="text-xs text-green-600 mt-1">
-            Wallet Applied: {fmt(walletUsed)}
-          </p>
-        )}
-      </div>
+      )}
 
       {/* Payable Amount */}
       <div className="mt-4 flex justify-between items-center">

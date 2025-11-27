@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useKeenSlider } from "keen-slider/react";
 import "keen-slider/keen-slider.min.css";
-import spaImage from "../../assets/facialimg.png";
+import spaImage from "../../assets/imageforback.jpg";
 import GetProductImage from "../../backend/getproduct/getproductimage";
 import SuggestProductScreen from "./suggestedproduct";
 import RatingScreen from "./ratingscreen";

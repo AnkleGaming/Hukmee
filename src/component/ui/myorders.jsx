@@ -85,7 +85,8 @@ const MyOrder = () => {
           Accepted: "done", // <--- when filter is "Accepted" send "done"
           Completed: "completed",
           Pending: "pending",
-          // add more mappings if your API expects different keywords
+          Placed: "placed",
+          Cancelled: "cancelled",
         };
 
         // use mapping, but fall back to filter string if not present
@@ -121,21 +122,26 @@ const MyOrder = () => {
           {/* Responsive Filter Tabs */}
           <div className="mt-4 flex justify-center">
             <div className="inline-flex bg-gray-50 rounded-xl shadow-inner p-4 overflow-x-auto scrollbar-hide gap-1">
-              {["All", "Pending", "Accepted", "Cancelled", "Completed"].map(
-                (f) => (
-                  <button
-                    key={f}
-                    onClick={() => setFilter(f)}
-                    className={`px-4 py-2 sm:px-5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-300 whitespace-nowrap min-w-[80px] sm:min-w-[100px] ${
-                      filter === f
-                        ? `bg-gradient-to-r ${Colors.gradientFrom} ${Colors.gradientTo} text-white shadow-md`
-                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                    }`}
-                  >
-                    {f === "All" ? "All Orders" : f}
-                  </button>
-                )
-              )}
+              {[
+                "All",
+                "Pending",
+                "Placed",
+                "Accepted",
+                "Cancelled",
+                "Completed",
+              ].map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setFilter(f)}
+                  className={`px-4 py-2 sm:px-5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-300 whitespace-nowrap min-w-[80px] sm:min-w-[100px] ${
+                    filter === f
+                      ? `bg-gradient-to-r ${Colors.gradientFrom} ${Colors.gradientTo} text-white shadow-md`
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                  }`}
+                >
+                  {f === "All" ? "All Orders" : f}
+                </button>
+              ))}
             </div>
           </div>
         </div>
