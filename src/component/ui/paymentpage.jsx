@@ -58,6 +58,8 @@ const PaymentPage = () => {
   const [finalPayable, setFinalPayable] = useState(0);
   const [walletUsed, setWalletUsed] = useState(0);
   const [useWalletFlag, setUseWalletFlag] = useState(false);
+  const [couponDiscount, setCouponDiscount] = useState(0);
+  const [selectedCoupon, setSelectedCoupon] = useState(null);
 
   const UserID = localStorage.getItem("userPhone");
 
@@ -613,19 +615,24 @@ const PaymentPage = () => {
                 payableAmount,
                 useWallet,
                 walletUsed,
+                totalAmount,
                 walletBalance,
+                couponDiscount: couponDisc, // ← NEW
+                selectedCoupon: coupon, // ← NEW
               }) => {
-                console.log(
-                  "Wallet Data:",
+                console.log("Payment Summary:", {
+                  totalAmount,
+                  couponDisc,
+                  walletUsed,
                   payableAmount,
-                  useWallet,
-                  walletUsed
-                );
+                });
 
                 setFinalPayable(payableAmount);
                 setWalletUsed(walletUsed);
                 setUseWalletFlag(useWallet);
                 setWalletBalance(walletBalance);
+                setCouponDiscount(couponDisc); // ← Save coupon discount
+                setSelectedCoupon(coupon); // ← Save selected coupon
               }}
             />
           </div>
