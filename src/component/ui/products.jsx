@@ -92,7 +92,7 @@ const UsedProduct = () => {
     navigate("/productmainpage", { state: { subService: service } });
   };
 
-  const CartWithBadge = ({ count }) => (
+  const CartWithBadge = () => (
     <div className="relative">
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -106,15 +106,6 @@ const UsedProduct = () => {
         <circle cx="20" cy="21" r="2" />
         <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
       </svg>
-      {count > 0 && (
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          className="absolute -top-4 -right-3 bg-red-500 text-white text-xs font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1 shadow-lg border-2 border-white"
-        >
-          {count > 99 ? "99+" : count}
-        </motion.div>
-      )}
     </div>
   );
 
@@ -146,7 +137,7 @@ const UsedProduct = () => {
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-50">
       {/* === FIXED HEADER === */}
       <header className="md:hidden sticky top-0 left-0 right-0 bg-white shadow-md z-50 border-b border-gray-200 ">
-        <div className=" py-3">
+        <div className=" py-6">
           <div className="flex items-center justify-between gap-3">
             {/* Back Button + Title */}
             <div className="flex items-center gap-3 flex-1">
@@ -257,7 +248,7 @@ const UsedProduct = () => {
               {isLoading ? (
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
-                <CartWithBadge count={2} />
+                <CartWithBadge />
               )}
             </button>
           </div>

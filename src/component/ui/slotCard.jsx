@@ -14,9 +14,9 @@ const SlotCard = ({ onSelectSlot }) => {
     const generateSlots = () => {
       const now = new Date();
 
-      // Include today + next 2 days
+      // Generate Today + Next 2 Days
       const dynamicDays = Array.from({ length: 3 }, (_, i) => {
-        const date = addDays(now, i);
+        const date = addDays(startOfDay(now), i);
         return {
           label: format(date, "EEE"),
           date: format(date, "d"),
@@ -27,34 +27,50 @@ const SlotCard = ({ onSelectSlot }) => {
         };
       });
 
-      // Time slots: next 6 available hours (9 AM – 9 PM)
+      // Time slots logic - START FROM NEXT FULL HOUR, UP TO 8 PM ONLY
       const slots = [];
-      let base = new Date(now);
-      base.setHours(base.getHours() + 1, 0, 0, 0);
+      let startTime = new Date(now);
 
-      const startHour = 10;
-      const endHour = 21;
+      // Round up to next full hour
+      startTime.setHours(startTime.getHours() + 1);
+      startTime.setMinutes(0, 0, 0); // 12:00, 1:00, 2:00 etc.
 
-      if (base.getHours() >= endHour) {
-        base = addDays(startOfDay(base), 1);
-        base.setHours(startHour, 0, 0, 0);
-      } else if (base.getHours() < startHour) {
-        base.setHours(startHour, 0, 0, 0);
+      const today = startOfDay(now);
+      const endOfDay8PM = new Date(today);
+      endOfDay8PM.setHours(20, 0, 0, 0); // 8:00 PM
+
+      // If current time is past 8 PM → no slots for today
+      if (now > endOfDay8PM) {
+        setDays(dynamicDays);
+        setTimeSlots([]);
+        setSelectedDay(dynamicDays[0]);
+        setLoading(false);
+        return;
       }
 
-      while (slots.length < 6 && base.getHours() < endHour) {
+      // If next full hour is after 8 PM → no slots today
+      if (startTime > endOfDay8PM) {
+        setDays(dynamicDays);
+        setTimeSlots([]);
+        setSelectedDay(dynamicDays[0]);
+        setLoading(false);
+        return;
+      }
+
+      // Generate slots from next hour up to 8 PM
+      while (startTime <= endOfDay8PM) {
         slots.push({
-          time: format(base, "h:mm a"),
-          fullTime: format(base, "HH:mm"),
-          iso: base.toISOString(),
+          time: format(startTime, "h:mm a"), // 12:00 PM
+          fullTime: format(startTime, "HH:mm"), // 12:00
+          iso: startTime.toISOString(),
         });
-        base = addMinutes(base, 60);
+        startTime = addMinutes(startTime, 60); // next hour
       }
 
       setDays(dynamicDays);
       setTimeSlots(slots);
       setSelectedDay(dynamicDays[0]);
-      setSelectedTime(slots[0]);
+      setSelectedTime(slots[0] || null); // auto-select first if available
       setLoading(false);
     };
 
@@ -171,25 +187,32 @@ const SlotCard = ({ onSelectSlot }) => {
             <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
             Start Time
           </h4>
-          <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
-            {timeSlots.map((slot) => (
-              <button
-                key={slot.fullTime}
-                onClick={() => setSelectedTime(slot)}
-                className={`
-                  py-2.5 sm:py-3 px-3 sm:px-4 rounded-full text-xs sm:text-sm font-medium transition-all duration-300
-                  focus:outline-none focus:ring-2 focus:ring-orange-400
-                  ${
-                    selectedTime?.fullTime === slot.fullTime
-                      ? "bg-gradient-to-r from-orange-500 to-pink-500 text-white shadow-md"
-                      : "bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200"
-                  }
-                `}
-              >
-                {slot.time}
-              </button>
-            ))}
-          </div>
+          {timeSlots.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <p className="text-sm">No slots available today</p>
+              <p className="text-xs mt-1">Please check tomorrow's slots</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
+              {timeSlots.map((slot) => (
+                <button
+                  key={slot.fullTime}
+                  onClick={() => setSelectedTime(slot)}
+                  className={`
+                    py-2.5 sm:py-3 px-3 sm:px-4 rounded-full text-xs sm:text-sm font-medium transition-all duration-300
+                    focus:outline-none focus:ring-2 focus:ring-orange-400
+                    ${
+                      selectedTime?.fullTime === slot.fullTime
+                        ? "bg-gradient-to-r from-orange-500 to-pink-500 text-white shadow-md"
+                        : "bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200"
+                    }
+                  `}
+                >
+                  {slot.time}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -197,7 +220,7 @@ const SlotCard = ({ onSelectSlot }) => {
       <div className="p-5 sm:p-6 border-t border-gray-100 bg-gray-50/80 backdrop-blur">
         <button
           onClick={handleProceed}
-          disabled={!selectedDay || !selectedTime}
+          disabled={!selectedDay || !selectedTime || timeSlots.length === 0}
           className={`
             w-full py-3.5 sm:py-4 rounded-xl font-bold text-white text-sm sm:text-base
             bg-gradient-to-r ${Colors.primaryFrom} ${Colors.primaryTo}
@@ -207,7 +230,7 @@ const SlotCard = ({ onSelectSlot }) => {
             focus:outline-none focus:ring-4 focus:ring-orange-300
           `}
         >
-          Confirm Slot
+          {timeSlots.length === 0 ? "No Slots Available" : "Confirm Slot"}
           <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
         </button>
       </div>
