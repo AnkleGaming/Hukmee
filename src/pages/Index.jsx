@@ -29,7 +29,7 @@ const Index = () => {
       Rating: "4",
       Review: "Great product! The quality exceeded my expectations.",
       image:
-        "https://images.unsplash.com/photo-1589578527966-1e824e6a8c99?q=80&w=400",
+        "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?q=80&w=400",
     },
     {
       ID: 2,
@@ -37,7 +37,7 @@ const Index = () => {
       Rating: "4.9",
       Review: "Absolutely loved it. Highly recommend to others!",
       image:
-        "https://images.unsplash.com/photo-1592129757340-fdfce2ecfafe?q=80&w=400",
+        "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?q=80&w=400",
     },
     {
       ID: 3,
@@ -45,7 +45,7 @@ const Index = () => {
       Rating: "4.4",
       Review: "It’s decent but could be improved in packaging.",
       image:
-        "https://images.unsplash.com/photo-1608889333540-0ec40a8db7bf?q=80&w=400",
+        "https://images.unsplash.com/photo-1564564321837-a57b7070ac4f?q=80&w=400",
     },
     {
       ID: 4,
@@ -53,7 +53,7 @@ const Index = () => {
       Rating: "4.9",
       Review: "Very useful and affordable. Will buy again.",
       image:
-        "https://images.unsplash.com/photo-1573497019224-08f8a1669a18?q=80&w=400",
+        "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?q=80&w=400",
     },
     {
       ID: 5,
@@ -61,7 +61,7 @@ const Index = () => {
       Rating: "4.9",
       Review: "The product works exactly as advertised. Worth the price!",
       image:
-        "https://images.unsplash.com/photo-1616931083936-91370093f86a?q=80&w=400",
+        "https://images.unsplash.com/photo-1564564321837-a57b7070ac4f?q=80&w=400",
     },
     {
       ID: 6,
