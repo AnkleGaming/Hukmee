@@ -137,7 +137,7 @@ const UsedProduct = () => {
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-50">
       {/* === FIXED HEADER === */}
       <header className="md:hidden sticky top-0 left-0 right-0 bg-white shadow-md z-50 border-b border-gray-200 ">
-        <div className=" py-6">
+        <div className="mt-4 py-4">
           <div className="flex items-center justify-between gap-3">
             {/* Back Button + Title */}
             <div className="flex items-center gap-3 flex-1">
