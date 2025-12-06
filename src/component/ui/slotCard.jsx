@@ -94,10 +94,15 @@ const SlotCard = ({ onSelectSlot }) => {
 
   const handleProceed = () => {
     if (selectedDay && selectedTime) {
+      const finalDate = new Date(
+        `${selectedDay.fullDate}T${selectedTime.fullTime}`
+      );
+      const formatted = format(finalDate, "dd/MM/yyyy - h:mm a");
+
       onSelectSlot({
         day: selectedDay,
         time: selectedTime,
-        dateTime: `${selectedDay.fullDate} ${selectedTime.fullTime}`, // e.g., "2025-04-05 14:00"
+        dateTime: formatted, // 👉 "07/12/2025 - 3:00 PM"
       });
     }
   };

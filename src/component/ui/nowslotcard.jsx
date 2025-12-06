@@ -62,7 +62,13 @@ const NowSlotCard = ({ onSelectSlot }) => {
 
   const handleProceed = () => {
     if (today && nearestSlot) {
-      onSelectSlot({ day: today, time: nearestSlot });
+      const formatted = formatSlot(today.fullDate, nearestSlot.fullTime);
+
+      onSelectSlot({
+        day: today,
+        time: nearestSlot,
+        dateTime: formatted, // 👉 "07/12/2025 - 3:00 PM"
+      });
     }
   };
 

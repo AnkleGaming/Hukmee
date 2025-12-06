@@ -720,19 +720,19 @@ const PaymentPage = () => {
               >
                 <SlotCard
                   onSelectSlot={(slot) => {
-                    // slot === { day, time } from SlotCard
                     const normalized = {
-                      slotName: `${slot.day.label} ${slot.day.date} - ${slot.time.time}`, // human friendly
-                      slotIso: slot.time.iso, // useful for backend if needed
+                      slotName: slot.dateTime,
+                      slotIso: slot.time.iso,
                       day: slot.day,
-                      time: slot.time, // original object preserved
+                      time: slot.time,
+                      dateTime: slot.dateTime,
                     };
 
                     setSelectedSlot(normalized);
                     setShowSlotModal(false);
                   }}
-                  onClose={() => setShowSlotModal(false)}
                 />
+
                 <div className="mt-4 flex justify-end">
                   <button
                     onClick={() => setShowSlotModal(false)}
