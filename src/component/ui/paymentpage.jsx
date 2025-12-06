@@ -754,26 +754,24 @@ const PaymentPage = () => {
               exit={{ opacity: 0 }}
             >
               <motion.div
-                className="bg-white rounded-xl shadow-xl w-full max-w-md p-5"
-                initial={{ y: 20, scale: 0.98 }}
+                className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8"
+                initial={{ y: 50, scale: 0.9 }}
                 animate={{ y: 0, scale: 1 }}
-                exit={{ y: 20, scale: 0.98 }}
+                exit={{ y: 50, scale: 0.9 }}
               >
                 <NowSlotCard
                   onSelectSlot={(slot) => {
                     setSelectedSlot(slot);
                     setShowNow(false);
                   }}
-                  onClose={() => setShowNow(false)}
                 />
-                <div className="mt-4 flex justify-end">
-                  <button
-                    onClick={() => setShowNow(false)}
-                    className="px-4 py-2 text-sm font-medium text-orange-600 hover:text-orange-800 bg-orange-50 hover:bg-orange-100 rounded-lg transition"
-                  >
-                    Close
-                  </button>
-                </div>
+
+                <button
+                  onClick={() => setShowNow(false)}
+                  className="mt-6 w-full py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200"
+                >
+                  Cancel
+                </button>
               </motion.div>
             </motion.div>
           </AnimatePresence>

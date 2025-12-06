@@ -1,6 +1,7 @@
+// src/components/nowslotcard.jsx
 import React, { useState, useEffect } from "react";
 import { format, addDays, startOfDay } from "date-fns";
-import { Calendar, Clock, ChevronRight } from "lucide-react";
+import { Calendar, Clock, ChevronRight, Sparkles } from "lucide-react";
 import Colors from "../../core/constant";
 
 const NowSlotCard = ({ onSelectSlot }) => {
@@ -9,128 +10,96 @@ const NowSlotCard = ({ onSelectSlot }) => {
 
   useEffect(() => {
     const now = new Date();
+    let targetDate = new Date();
+    let targetHour = 10;
 
-    const cutoffHour = 20; // 8 PM
-    const startHour = 10; // 10 AM
-    const endHour = 21; // 9 PM
+    const hour = now.getHours();
+    const min = now.getMinutes();
 
-    let selectedDay = new Date();
-
-    // ---- ✅ If time >= 8 PM → move to next day
-    if (now.getHours() >= cutoffHour) {
-      selectedDay = addDays(startOfDay(now), 1);
-      selectedDay.setHours(startHour, 0, 0, 0);
-    }
-
-    // ---- Build TODAY/TOMORROW object
-    const todayObj = {
-      label: format(selectedDay, "EEE"),
-      date: format(selectedDay, "d"),
-      month: format(selectedDay, "MMM"),
-      fullDate: format(selectedDay, "yyyy-MM-dd"),
-      recommended: true,
-    };
-
-    setToday(todayObj);
-
-    // ---- Nearest Slot Logic
-    let slotTime = new Date(selectedDay);
-
-    if (now.getHours() >= cutoffHour) {
-      // If after 8 PM → first slot = 10 AM tomorrow
-      slotTime.setHours(startHour, 0, 0, 0);
+    if (hour >= 20) {
+      // After 8 PM → tomorrow 10 AM
+      targetDate = addDays(startOfDay(now), 1);
+      targetHour = 10;
+    } else if (hour < 10) {
+      // Before 10 AM → today 10 AM
+      targetHour = 10;
     } else {
-      // Otherwise find next slot from current time
-      slotTime = new Date(now);
-      slotTime.setMinutes(0, 0, 0);
-      slotTime.setHours(slotTime.getHours() + 1);
-
-      // If current hour is past 9 PM → tomorrow 10 AM
-      if (slotTime.getHours() >= endHour) {
-        slotTime = addDays(startOfDay(now), 1);
-        slotTime.setHours(startHour, 0, 0, 0);
-      }
+      // 10 AM to 7:59 PM → next full hour
+      targetHour = hour + (min > 0 ? 1 : 0);
+      if (targetHour > 20) targetHour = 20; // cap at 8 PM
     }
 
-    const slot = {
+    const slotTime = new Date(targetDate);
+    slotTime.setHours(targetHour, 0, 0, 0);
+
+    setToday({
+      label: format(slotTime, "EEE"),
+      date: format(slotTime, "d"),
+      month: format(slotTime, "MMM"),
+      fullDate: format(slotTime, "yyyy-MM-dd"),
+    });
+
+    setNearestSlot({
       time: format(slotTime, "h:mm a"),
       fullTime: format(slotTime, "HH:mm"),
-    };
-
-    setNearestSlot(slot);
+      iso: slotTime.toISOString(),
+    });
   }, []);
 
-  const handleProceed = () => {
+  const handleConfirm = () => {
     const finalDate = new Date(`${today.fullDate}T${nearestSlot.fullTime}`);
-
-    const formatted = format(finalDate, "dd/MM/yyyy - h:mm a");
+    const formatted = format(finalDate, "dd/MM/yyyy - h:mm a"); // 07/12/2025 - 3:00 PM
 
     onSelectSlot({
       day: today,
       time: nearestSlot,
       dateTime: formatted,
+      iso: finalDate.toISOString(),
+      slotName: formatted,
     });
   };
 
   if (!today || !nearestSlot) {
-    return (
-      <div className="bg-white rounded-2xl p-8 shadow-lg animate-pulse">
-        <div className="h-8 bg-gray-200 rounded w-3/4 mb-6"></div>
-        <div className="space-y-4">
-          <div className="h-20 bg-gray-100 rounded-xl"></div>
-          <div className="h-12 bg-gray-100 rounded-lg"></div>
-        </div>
-      </div>
-    );
+    return <div className="text-center py-10">Loading slot...</div>;
   }
 
   return (
-    <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-xl max-w-md mx-auto font-sans hover:shadow-2xl transition-shadow duration-300">
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-7">
-        <div className="p-3 bg-orange-100 rounded-xl">
-          <Calendar className="w-6 h-6 text-orange-600" />
-        </div>
+    <div className="bg-white rounded-2xl p-6 shadow-2xl max-w-md mx-auto border border-gray-100">
+      <div className="text-center mb-8">
         <h2
-          className={`text-2xl font-bold bg-gradient-to-r ${Colors.primaryFrom} ${Colors.primaryTo} bg-clip-text text-transparent`}
+          className={`text-xl font-bold bg-gradient-to-r ${Colors.primaryFrom} ${Colors.primaryTo} bg-clip-text text-transparent`}
         >
-          Schedule Your Service
+          Book Now
         </h2>
+        <p className="text-gray-600 mt-2">Fastest available slot</p>
       </div>
 
-      {/* Show Today’s Date */}
-      <div className="mb-7 text-center border border-gray-200 rounded-xl py-4 shadow-sm bg-orange-50">
-        <p className="text-sm text-gray-600">{today.label}</p>
-        <p className="text-3xl font-bold text-orange-600">{today.date}</p>
-        <p className="text-sm text-gray-500">{today.month}</p>
-        <p className="text-xs text-orange-500 font-medium mt-1">
-          ⭐ Today’s Recommended Slot
+      <div className="bg-gradient-to-br from-orange-50 to-pink-50 rounded-2xl p-3 text-center mb-2 border-2 border-orange-200">
+        <Sparkles className="w-5 h-5 text-orange-600 mx-auto mb-3" />
+        <p className="text-xl font-bold text-orange-600">{today.date}</p>
+        <p className="text-l text-gray-700">
+          {today.label}, {today.month}
         </p>
       </div>
 
-      {/* Nearest Slot */}
-      <div className="mb-8 text-center">
-        <h4 className="text-lg font-semibold text-gray-900 mb-3 flex justify-center items-center gap-2">
-          <Clock className="w-5 h-5 text-gray-600" />
-          Nearest Available Time
-        </h4>
-        <div className="py-3 px-6 inline-block border-2 border-orange-500 bg-orange-50 text-orange-600 rounded-xl shadow-md font-medium text-sm">
+      <div className="text-center mb-5">
+        <p className="text-l font-medium text-gray-800 mb-4">Available at</p>
+        <div className="inline-block bg-gradient-to-r from-orange-500 to-pink-600 text-white text-xl font-bold px-10 py-3 rounded-2xl shadow-xl">
           {nearestSlot.time}
         </div>
       </div>
 
-      {/* Proceed Button */}
       <button
-        onClick={handleProceed}
-        className={`w-full py-4 px-6 rounded-xl font-bold text-white bg-gradient-to-r ${Colors.primaryFrom} ${Colors.primaryTo} hover:shadow-lg transform hover:scale-[1.02] active:scale-95 transition-all duration-300 flex items-center justify-center gap-2`}
+        onClick={handleConfirm}
+        className={`w-full py-3 rounded-2xl font-bold text-white text-l bg-gradient-to-r ${Colors.primaryFrom} ${Colors.primaryTo} shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 flex items-center justify-center gap-3`}
       >
-        Proceed
-        <ChevronRight className="w-5 h-5" />
+        Confirm This Slot
+        <ChevronRight className="w-6 h-6" />
       </button>
 
-      {/* <p className="text-xs text-gray-500 text-center mt-4">
-        Service starts at selected time • Professional arrives within 30 mins
-      </p> */}
+      <p className="text-center text-xs text-gray-500 mt-6">
+        Service available 10:00 AM – 8:00 PM
+      </p>
     </div>
   );
 };
