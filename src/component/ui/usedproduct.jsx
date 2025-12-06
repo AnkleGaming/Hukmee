@@ -140,7 +140,7 @@ const UsedProduct = () => {
         <div className="mt-4 py-4">
           <div className="flex items-center justify-between gap-3">
             {/* Back Button + Title */}
-            <div className="flex items-center gap-3 flex-1">
+            <div className="flex items-center gap-3 flex-1 ml-7 py-3">
               {/* <motion.button
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
@@ -220,7 +220,7 @@ const UsedProduct = () => {
       {/* === MAIN CONTENT (Starts below header) === */}
 
       <div>
-        <div className="md:hidden flex justify-between items-center px-[25px] mt-1">
+        <div className="md:hidden flex justify-between items-center px-[20px] mt-1">
           <motion.div
             variants={headerVariants}
             initial="hidden"

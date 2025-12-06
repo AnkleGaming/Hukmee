@@ -133,13 +133,13 @@ const PaymentPage = () => {
         setCartItems(cartItemsFromBackend);
 
         // Auto-fill address
-        if (pendingOrder.Address) {
-          setSelectedAddress({
-            FullAddress: pendingOrder.Address,
-            Name: "", // not available in this model
-            Phone: UserID,
-          });
-        }
+        // if (pendingOrder.Address) {
+        //   setSelectedAddress({
+        //     FullAddress: pendingOrder.Address,
+        //     Name: "", // not available in this model
+        //     Phone: UserID,
+        //   });
+        // }
 
         console.log("Cart loaded successfully:", cartItemsFromBackend);
         console.log("Total items:", cartItemsFromBackend.length);
@@ -153,6 +153,15 @@ const PaymentPage = () => {
 
     fetchOrders();
   }, [UserID]);
+
+  useEffect(() => {
+    return () => {
+      console.log("Leaving PaymentPage → Resetting address & slot");
+
+      setSelectedAddress(null);
+      setSelectedSlot(null);
+    };
+  }, []);
 
   const getTotalQuantity = () => {
     return cartItems.reduce((sum, item) => sum + (item.quantity || 1), 0);

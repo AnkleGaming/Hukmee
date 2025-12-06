@@ -92,7 +92,7 @@ const MobileCartSummary = () => {
   );
 
   const hasReorder = pending1.length > 0;
-  const hasNormalCart = orders.length > 0;
+  const hasNormalCart = orders.length >= 0;
 
   if (loading || (!hasReorder && !hasNormalCart)) return null;
 

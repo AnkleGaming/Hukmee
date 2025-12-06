@@ -83,7 +83,7 @@ const AddressFormCard = ({ onClose, onSelectAddress }) => {
           city: "",
           pincode: "",
         });
-        const fetchedAddresses = await GetAddress("7700818001");
+        const fetchedAddresses = await GetAddress(phone);
         setAddresses(fetchedAddresses || []);
         setShowForm(false);
         setTimeout(() => {
@@ -108,7 +108,6 @@ const AddressFormCard = ({ onClose, onSelectAddress }) => {
     onClose?.();
   };
 
-  // 📍 Fetch user location and autofill address fields
   const handleLocationFetch = async () => {
     setMessage("📡 Getting current location...");
 
@@ -140,7 +139,7 @@ const AddressFormCard = ({ onClose, onSelectAddress }) => {
 
   return (
     <div
-      className={`max-w-md mx-auto p-6 sm:p-8 bg-white shadow-xl rounded-2xl border border-gray-100 font-sans transition-all duration-500 h-[450px] ${
+      className={`max-w-md mx-auto p-6 sm:p-8 bg-transparent rounded-2xl border border-gray-100 font-sans transition-all duration-500 h-[450px] ${
         isOpen ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4"
       }`}
     >
@@ -185,7 +184,7 @@ const AddressFormCard = ({ onClose, onSelectAddress }) => {
                 {message}
               </div>
             )}
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-5 p-3">
               <div className="mb-4">
                 <button
                   type="button"
