@@ -232,14 +232,14 @@ const CartPage = () => {
         Price: "",
         Quantity: "",
         Status: "Onservice",
-        VendorPhone: UserID,
+        VendorPhone: "",
         BeforVideo: "",
         AfterVideo: "",
         OTP: "",
         PaymentMethod: "",
       });
 
-      alert("Payment Complited...");
+      alert("Payment Completed...");
 
       window.location.reload();
     } catch (error) {
