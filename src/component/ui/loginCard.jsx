@@ -64,7 +64,8 @@ const LoginCard = ({ onClose, onSubmit }) => {
     setLoading(true);
 
     try {
-      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      // const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      const otp = "123456";
       localStorage.setItem("userPhone", phoneNumber);
       localStorage.setItem("userOTP", otp);
 
@@ -147,8 +148,6 @@ const LoginCard = ({ onClose, onSubmit }) => {
             <div className="flex gap-3 mb-6">
               <select className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-50 text-gray-800 focus:ring-2 focus:ring-indigo-500">
                 <option value="+91">+91</option>
-                <option value="+1">+1</option>
-                <option value="+44">+44</option>
               </select>
               <input
                 type="tel"
@@ -240,8 +239,6 @@ const LoginCard = ({ onClose, onSubmit }) => {
             <div className="flex mb-6">
               <select className="border border-gray-200 rounded-l-lg px-3 py-2 text-sm bg-gray-50 text-gray-800 focus:ring-2 focus:ring-indigo-500">
                 <option value="+91">+91</option>
-                <option value="+1">+1</option>
-                <option value="+44">+44</option>
               </select>
               <input
                 type="tel"
