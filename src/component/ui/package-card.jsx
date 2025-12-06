@@ -58,7 +58,7 @@ const PackageCardItem = memo(
             <img
               src={image || "https://via.placeholder.com/600x300"}
               alt={servicename}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+              className="w-full md:w-[450px] h-full object-cover transition-transform duration-500 group-hover:scale-110"
               loading="lazy"
             />
             {/* Duration Badge */}

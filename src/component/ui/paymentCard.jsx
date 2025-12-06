@@ -12,16 +12,13 @@ const PaymentCard = ({
   onProceed,
   selectedAddress,
   selectedSlot,
-  itemTotal = 0,
 }) => {
   const [isMobile, setIsMobile] = useState(false);
   const [isLoggedIn] = useState(localStorage.getItem("isLoggedIn") === "true");
   const navigate = useNavigate();
-  const [orders, setOrders] = useState([]);
   const UserID = localStorage.getItem("userPhone");
   const [orderType, setOrderType] = useState(null);
 
-  // ---------- Detect mobile ----------
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
     check();
@@ -30,28 +27,14 @@ const PaymentCard = ({
   }, []);
 
   const fetchCartOrders = useCallback(async () => {
-    if (!UserID) {
-      setOrders([]);
-      setOrderType(null);
-      return;
-    }
-
+    if (!UserID) return;
     try {
       const data = await GetOrder(UserID, "Pending");
-
       if (Array.isArray(data) && data.length > 0) {
-        setOrders(data);
-
-        // Pick first item OrderType (all items same order)
         setOrderType(data[0].OrderType || null);
-      } else {
-        setOrders([]);
-        setOrderType(null);
       }
     } catch (err) {
-      console.error("Error fetching cart:", err);
-      setOrders([]);
-      setOrderType(null);
+      console.error("Error fetching order type:", err);
     }
   }, [UserID]);
 
@@ -59,37 +42,41 @@ const PaymentCard = ({
     fetchCartOrders();
   }, [fetchCartOrders]);
 
-  // ---------- Button state ----------
   const isProduct = orderType === "Product";
-  const needAddress = !selectedAddress;
-  const needSlot = !isProduct && !selectedSlot;
-  const canProceed = isProduct
-    ? selectedAddress // only address needed
-    : selectedAddress && selectedSlot; // both needed for service
+
+  // Address is ALWAYS required
+  const canActuallyProceed = selectedAddress && (isProduct || selectedSlot);
 
   const getButtonLabel = () => {
     if (!isLoggedIn) return "Login to Continue";
     if (!selectedAddress) return "Select Address";
-
     if (!isProduct && !selectedSlot) return "Select Slot";
-
     return "Proceed";
   };
 
   const handleMainClick = () => {
     if (!isLoggedIn) return navigate("/login");
-    if (needAddress) return onSelectAddress();
-    if (needSlot) return onSelectSlot();
+    if (!selectedAddress) return onSelectAddress();
+    if (!isProduct && !selectedSlot) return onSelectSlot();
     onProceed();
   };
 
-  // -------------------------------------------------
-  // Desktop UI
-  // -------------------------------------------------
+  const handleSlotClick = () => {
+    if (!selectedAddress) {
+      alert("Please select your address first!");
+      onSelectAddress();
+    } else {
+      onSelectSlot();
+    }
+  };
+
+  // Button should be ENABLED when asking user to select address/slot
+  const isButtonInteractive =
+    isLoggedIn && (!selectedAddress || (!isProduct && !selectedSlot));
+
   const Desktop = () => (
     <div className="max-w-md mx-auto p-4">
       <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 space-y-6">
-        {/* Header */}
         <div className="flex items-center gap-3">
           <FaLocationDot className="w-6 h-6 text-green-600" />
           <div>
@@ -108,7 +95,6 @@ const PaymentCard = ({
             <FaLocationDot className="w-5 h-5 text-orange-600" />
             Address
           </h3>
-
           {selectedAddress ? (
             <div
               onClick={onSelectAddress}
@@ -135,17 +121,16 @@ const PaymentCard = ({
           )}
         </div>
 
-        {/* Slot */}
+        {/* Slot - Only for Services */}
         {!isProduct && (
           <div>
             <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900 mb-3">
               <IoIosTime className="w-5 h-5 text-indigo-600" />
               Slot
             </h3>
-
             {selectedSlot ? (
               <div
-                onClick={onSelectSlot}
+                onClick={handleSlotClick}
                 className="p-4 bg-indigo-50 border border-indigo-200 rounded-xl cursor-pointer hover:bg-indigo-100 transition"
               >
                 <p className="font-medium text-gray-800">
@@ -164,10 +149,10 @@ const PaymentCard = ({
               </div>
             ) : (
               <button
-                onClick={onSelectSlot}
-                disabled={needAddress}
+                onClick={handleSlotClick}
+                disabled={!selectedAddress}
                 className={`w-full py-3 rounded-xl font-medium transition-all ${
-                  needAddress
+                  !selectedAddress
                     ? "bg-gray-200 text-gray-500 cursor-not-allowed"
                     : `bg-${Colors.primaryMain} text-white shadow-md hover:shadow-lg`
                 }`}
@@ -177,14 +162,15 @@ const PaymentCard = ({
             )}
           </div>
         )}
-        {/* Proceed */}
+
+        {/* Proceed Button */}
         <button
           onClick={handleMainClick}
-          disabled={!canProceed}
+          disabled={!isLoggedIn || !canActuallyProceed} // Only disable when truly cannot proceed
           className={`w-full py-4 rounded-xl font-bold text-lg transition-all shadow-lg ${
-            !canProceed
+            !isLoggedIn || !canActuallyProceed
               ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-              : `bg-${Colors.primaryMain} text-white shadow-md hover:shadow-lg hover:cursor-pointer`
+              : `bg-${Colors.primaryMain} text-white hover:shadow-lg`
           }`}
         >
           {getButtonLabel()}
@@ -193,51 +179,59 @@ const PaymentCard = ({
     </div>
   );
 
-  // -------------------------------------------------
-  // Mobile UI (Sticky Bottom Bar)
-  // -------------------------------------------------
-  const Mobile = () => (
-    <div className="fixed inset-x-0 bottom-0 z-50 bg-white border-t border-gray-200 shadow-2xl">
-      <div className="p-3 space-y-2">
-        {/* Summary Pills */}
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
-          {selectedAddress && (
-            <div
-              onClick={onSelectAddress}
-              className="flex items-center gap-2 px-3 py-2 bg-orange-50 border border-orange-300 rounded-full whitespace-nowrap cursor-pointer hover:bg-orange-100 transition"
-            >
-              <FaLocationDot className="w-4 h-4 text-orange-600" />
-              <span className="text-xs font-medium text-gray-700">
-                {selectedAddress.Name.split(" ")[0]}
-              </span>
-              <MdEdit className="w-3.5 h-3.5 text-gray-500" />
-            </div>
-          )}
+  const Mobile = () => {
+    const label = getButtonLabel();
+    const shouldEnableButton =
+      label === "Select Address" ||
+      label === "Select Slot" ||
+      label === "Proceed";
 
-          {selectedSlot && (
-            <div
-              onClick={onSelectSlot}
-              className="flex items-center gap-2 px-3 py-2 bg-indigo-50 border border-indigo-300 rounded-full whitespace-nowrap cursor-pointer hover:bg-indigo-100 transition"
-            >
-              <IoIosTime className="w-4 h-4 text-indigo-600" />
-              <span className="text-xs font-medium text-gray-700">
-                {selectedSlot.time?.time}
-              </span>
-              <MdEdit className="w-3.5 h-3.5 text-gray-500" />
-            </div>
-          )}
+    return (
+      <div className="fixed inset-x-0 bottom-0 z-50 bg-white border-t border-gray-200 shadow-2xl">
+        <div className="p-3 space-y-3">
+          <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1">
+            {selectedAddress && (
+              <div
+                onClick={onSelectAddress}
+                className="flex items-center gap-2 px-4 py-2 bg-orange-50 border border-orange-300 rounded-full whitespace-nowrap cursor-pointer hover:bg-orange-100 transition"
+              >
+                <FaLocationDot className="w-4 h-4 text-orange-600" />
+                <span className="text-sm font-medium text-gray-700">
+                  {selectedAddress.Name.split(" ")[0]}
+                </span>
+                <MdEdit className="w-4 h-4 text-gray-500" />
+              </div>
+            )}
+
+            {!isProduct && selectedSlot && (
+              <div
+                onClick={handleSlotClick}
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-50 border border-indigo-300 rounded-full whitespace-nowrap cursor-pointer hover:bg-indigo-100 transition"
+              >
+                <IoIosTime className="w-4 h-4 text-indigo-600" />
+                <span className="text-sm font-medium text-gray-700">
+                  {selectedSlot.time?.time}
+                </span>
+                <MdEdit className="w-4 h-4 text-gray-500" />
+              </div>
+            )}
+          </div>
+
+          {/* Main Action Button - Always enabled when guiding user */}
+          <button
+            onClick={handleMainClick}
+            className={`w-full py-4 rounded-xl font-bold text-lg transition-all shadow-lg active:scale-95 ${
+              !shouldEnableButton
+                ? "bg-gray-300 text-gray-600"
+                : "bg-orange-500 text-white hover:bg-orange-600"
+            }`}
+          >
+            {label}
+          </button>
         </div>
-
-        {/* Pay Button */}
-        <button
-          onClick={handleMainClick}
-          className={`w-full py-3.5 rounded-xl font-bold text-white transition-all shadow-lg ${"bg-orange-500 hover:from-ornage-600  active:scale-95"}`}
-        >
-          {getButtonLabel()}
-        </button>
       </div>
-    </div>
-  );
+    );
+  };
 
   return <>{isMobile ? <Mobile /> : <Desktop />}</>;
 };

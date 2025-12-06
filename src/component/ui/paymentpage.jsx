@@ -595,7 +595,14 @@ const PaymentPage = () => {
           <div>
             <PaymentCard
               onSelectAddress={() => setShowAddressModal(true)}
-              onSelectSlot={() => setShowSlotFirst(true)}
+              onSelectSlot={() => {
+                if (!selectedAddress) {
+                  alert("Please select address first!");
+                  setShowAddressModal(true);
+                } else {
+                  setShowSlotFirst(true);
+                }
+              }}
               onProceed={handleMainProceed}
               selectedAddress={selectedAddress}
               selectedSlot={selectedSlot}
@@ -641,7 +648,7 @@ const PaymentPage = () => {
           isOpen={showPaymentModal}
           onClose={() => setShowPaymentModal(false)}
         />
-        ;
+
         {showAddressModal && (
           <AnimatePresence>
             <motion.div

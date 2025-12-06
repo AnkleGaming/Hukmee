@@ -37,7 +37,7 @@ const WhyUs = () => {
     },
     {
       icon: MdVerified,
-      title: "6 Months Warranty",
+      title: "3 Months Warranty",
       description: "Hassle free 6 month warranty.",
       color: `text-${Colors.primaryMain}`,
     },
