@@ -187,7 +187,7 @@ const Navigation = () => {
               {[
                 { to: "/", label: "Home" },
                 {
-                  to: "https://hukmee-vendor-chi.vercel.app/",
+                  to: "https://vendor.hukmee.in/",
                   label: "Career",
                   external: true,
                 },
