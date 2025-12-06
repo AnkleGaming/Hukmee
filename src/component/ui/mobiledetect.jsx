@@ -136,8 +136,8 @@ const MobileDetect = () => {
   };
 
   const sharedStyles = {
-    container: "w-full flex items-center justify-center py-8",
-    card: "bg-orange-50 shadow-lg rounded-xl border border-gray-200 flex flex-col items-center text-center p-6 max-w-sm w-full",
+    container: "w-full  flex items-center justify-center py-8",
+    card: "bg-orange-50 shadow-lg rounded-xl border border-gray-200 flex flex-col items-center text-center px-25 max-w-sm w-full",
     title: `font-bold text-xl mb-3 text-${Colors.primaryMain}`,
     model: "font-semibold text-lg text-gray-800 mb-2",
     subtitle: "text-sm text-gray-500",

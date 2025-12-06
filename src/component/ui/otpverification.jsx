@@ -139,6 +139,21 @@ const OtpVerification = ({ onClose, onVerify }) => {
     }
   };
 
+  const handleChangeNumber = () => {
+    // Clear phone & OTP
+    localStorage.removeItem("userPhone");
+    localStorage.removeItem("userOTP");
+
+    // Close OTP modal
+    onClose && onClose();
+
+    // Tell parent (Navigation) to show LoginCard again
+    if (typeof window !== "undefined") {
+      // Trigger a custom event OR use a better state management
+      window.dispatchEvent(new Event("open-login-modal"));
+    }
+  };
+
   const modalVariants = {
     hidden: { opacity: 0, scale: 0.95 },
     visible: { opacity: 1, scale: 1 },
@@ -225,19 +240,28 @@ const OtpVerification = ({ onClose, onVerify }) => {
               ))}
             </div>
 
-            <div className="flex justify-center items-center gap-1 text-sm text-gray-500 mb-6">
-              <Clock className="w-4 h-4" />
-              {timeLeft > 0
-                ? `00:${timeLeft.toString().padStart(2, "0")}`
-                : "Time expired"}
-              {timeLeft <= 0 && (
-                <button
-                  onClick={handleResend}
-                  className="ml-4 text-indigo-600 underline"
-                >
-                  Resend OTP
-                </button>
-              )}
+            <div className="flex justify-between items-center w-full text-sm text-gray-500 mb-6">
+              <div className="flex items-center gap-1">
+                <Clock className="w-4 h-4" />
+                {timeLeft > 0
+                  ? `00:${timeLeft.toString().padStart(2, "0")}`
+                  : "Time expired"}
+                {timeLeft <= 0 && (
+                  <button
+                    onClick={handleResend}
+                    className="ml-3 text-indigo-600 font-medium underline"
+                  >
+                    Resend OTP
+                  </button>
+                )}
+              </div>
+
+              <button
+                onClick={handleChangeNumber}
+                className="text-indigo-600 font-medium underline hover:no-underline"
+              >
+                Change number
+              </button>
             </div>
 
             <button
@@ -304,21 +328,29 @@ const OtpVerification = ({ onClose, onVerify }) => {
               ))}
             </div>
 
-            <div className="flex justify-center items-center gap-1 text-sm text-gray-500 mb-6">
-              <Clock className="w-4 h-4" />
-              {timeLeft > 0
-                ? `00:${timeLeft.toString().padStart(2, "0")}`
-                : "Time expired"}
-              {timeLeft <= 0 && (
-                <button
-                  onClick={handleResend}
-                  className="ml-4 text-indigo-600 underline"
-                >
-                  Resend OTP
-                </button>
-              )}
-            </div>
+            <div className="flex justify-center items-center gap-4 text-sm text-gray-500 mb-6">
+              <div className="flex items-center gap-1">
+                <Clock className="w-4 h-4" />
+                {timeLeft > 0
+                  ? `00:${timeLeft.toString().padStart(2, "0")}`
+                  : "Time expired"}
+                {timeLeft <= 0 && (
+                  <button
+                    onClick={handleResend}
+                    className="ml-3 text-indigo-600 font-medium underline"
+                  >
+                    Resend OTP
+                  </button>
+                )}
+              </div>
 
+              <button
+                onClick={handleChangeNumber}
+                className="text-indigo-600 font-medium underline hover:no-underline"
+              >
+                Change number
+              </button>
+            </div>
             <button
               onClick={handleSubmit}
               disabled={!isOtpComplete}

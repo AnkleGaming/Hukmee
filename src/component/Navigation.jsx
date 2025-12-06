@@ -137,6 +137,19 @@ const Navigation = () => {
     }, 500);
   };
 
+  useEffect(() => {
+    const openLoginModal = () => {
+      setShowLoginModal(true);
+      setShowOtpModal(false);
+    };
+
+    window.addEventListener("open-login-modal", openLoginModal);
+
+    return () => {
+      window.removeEventListener("open-login-modal", openLoginModal);
+    };
+  }, []);
+
   // Modal animation variants
   const modalVariants = {
     hidden: { opacity: 0, y: 20, scale: 0.95 },

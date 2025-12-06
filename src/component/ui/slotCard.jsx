@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { format, addDays, addMinutes, startOfDay } from "date-fns";
+import { format, addDays, startOfDay, addMinutes } from "date-fns";
 import { Calendar, Clock, ChevronRight, Sparkles } from "lucide-react";
 import Colors from "../../core/constant";
 
@@ -10,109 +10,123 @@ const SlotCard = ({ onSelectSlot }) => {
   const [timeSlots, setTimeSlots] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Generate days and initial slots on mount
   useEffect(() => {
-    const generateSlots = () => {
+    const now = new Date();
+    const todayStr = format(startOfDay(now), "yyyy-MM-dd");
+
+    // Generate Today + Next 2 Days
+    const generatedDays = Array.from({ length: 3 }, (_, i) => {
+      const date = addDays(startOfDay(now), i);
+      return {
+        label: format(date, "EEE"),
+        date: format(date, "d"),
+        month: format(date, "MMM"),
+        fullDate: format(date, "yyyy-MM-dd"),
+        iso: date.toISOString(),
+        recommended: i === 0,
+      };
+    });
+
+    setDays(generatedDays);
+    setSelectedDay(generatedDays[0]); // default: today
+    setLoading(false);
+  }, []);
+
+  // Update time slots whenever selectedDay changes
+  useEffect(() => {
+    if (!selectedDay || days.length === 0) return;
+
+    const today = format(startOfDay(new Date()), "yyyy-MM-dd");
+
+    if (selectedDay.fullDate === today) {
+      // === TODAY: Limited slots from next hour to 8 PM ===
       const now = new Date();
-
-      // Generate Today + Next 2 Days
-      const dynamicDays = Array.from({ length: 3 }, (_, i) => {
-        const date = addDays(startOfDay(now), i);
-        return {
-          label: format(date, "EEE"),
-          date: format(date, "d"),
-          month: format(date, "MMM"),
-          fullDate: format(date, "yyyy-MM-dd"),
-          iso: date.toISOString(),
-          recommended: i === 0,
-        };
-      });
-
-      // Time slots logic - START FROM NEXT FULL HOUR, UP TO 8 PM ONLY
       const slots = [];
-      let startTime = new Date(now);
 
       // Round up to next full hour
-      startTime.setHours(startTime.getHours() + 1);
-      startTime.setMinutes(0, 0, 0); // 12:00, 1:00, 2:00 etc.
+      let startTime = new Date(now);
+      startTime.setHours(
+        startTime.getHours() + (startTime.getMinutes() > 0 ? 1 : 0)
+      );
+      startTime.setMinutes(0, 0, 0);
 
-      const today = startOfDay(now);
-      const endOfDay8PM = new Date(today);
-      endOfDay8PM.setHours(20, 0, 0, 0); // 8:00 PM
+      const end8PM = new Date(now);
+      end8PM.setHours(20, 0, 0, 0); // 8:00 PM today
 
-      // If current time is past 8 PM → no slots for today
-      if (now > endOfDay8PM) {
-        setDays(dynamicDays);
+      // If current time is past 8 PM → no slots today
+      if (now >= end8PM || startTime > end8PM) {
         setTimeSlots([]);
-        setSelectedDay(dynamicDays[0]);
-        setLoading(false);
+        setSelectedTime(null);
         return;
       }
 
-      // If next full hour is after 8 PM → no slots today
-      if (startTime > endOfDay8PM) {
-        setDays(dynamicDays);
-        setTimeSlots([]);
-        setSelectedDay(dynamicDays[0]);
-        setLoading(false);
-        return;
-      }
-
-      // Generate slots from next hour up to 8 PM
-      while (startTime <= endOfDay8PM) {
+      while (startTime <= end8PM) {
         slots.push({
-          time: format(startTime, "h:mm a"), // 12:00 PM
-          fullTime: format(startTime, "HH:mm"), // 12:00
+          time: format(startTime, "h:mm a"), // 2:00 PM
+          fullTime: format(startTime, "HH:mm"), // 14:00
           iso: startTime.toISOString(),
         });
-        startTime = addMinutes(startTime, 60); // next hour
+        startTime = addMinutes(startTime, 60);
       }
 
-      setDays(dynamicDays);
       setTimeSlots(slots);
-      setSelectedDay(dynamicDays[0]);
-      setSelectedTime(slots[0] || null); // auto-select first if available
-      setLoading(false);
-    };
+      setSelectedTime(slots[0] || null); // auto-select first
+    } else {
+      // === FUTURE DAYS: Full slots 10 AM to 8 PM ===
+      const slots = [];
+      let time = new Date(selectedDay.iso);
+      time.setHours(10, 0, 0, 0); // Start at 10:00 AM
 
-    generateSlots();
-  }, []);
+      while (time.getHours() <= 20) {
+        slots.push({
+          time: format(time, "h:mm a"),
+          fullTime: format(time, "HH:mm"),
+          iso: time.toISOString(),
+        });
+        time = addMinutes(time, 60);
+      }
+
+      setTimeSlots(slots);
+      setSelectedTime(slots[0] || null); // auto-select 10 AM
+    }
+  }, [selectedDay, days]);
 
   const handleProceed = () => {
     if (selectedDay && selectedTime) {
       onSelectSlot({
         day: selectedDay,
         time: selectedTime,
+        dateTime: `${selectedDay.fullDate} ${selectedTime.fullTime}`, // e.g., "2025-04-05 14:00"
       });
     }
   };
 
-  // Loading Skeleton
+  // Loading State
   if (loading) {
     return (
-      <div className="bg-white rounded-2xl p-5 shadow-xl max-w-md mx-auto h-[480px] flex flex-col animate-pulse">
+      <div className="bg-white rounded-2xl p-5 shadow-xl max-w-md mx-auto h-[520px] flex flex-col animate-pulse">
         <div className="h-8 bg-gray-200 rounded-lg w-3/4 mb-5"></div>
-        <div className="space-y-4 flex-1 overflow-hidden">
+        <div className="space-y-6 flex-1">
           <div className="grid grid-cols-3 gap-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-20 bg-gray-100 rounded-xl"></div>
+              <div key={i} className="h-24 bg-gray-100 rounded-xl"></div>
             ))}
+            )){"}"}
           </div>
           <div className="grid grid-cols-3 gap-3">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <div key={i} className="h-12 bg-gray-100 rounded-xl"></div>
             ))}
           </div>
-          <div className="h-14 bg-gray-200 rounded-xl mt-5"></div>
+          <div className="h-14 bg-gray-200 rounded-xl"></div>
         </div>
       </div>
     );
   }
 
   return (
-    <div
-      className="bg-white rounded-2xl shadow-2xl max-w-md mx-auto border border-gray-100
-                 h-[520px] sm:h-[540px] flex flex-col overflow-hidden"
-    >
+    <div className="bg-white rounded-2xl shadow-2xl max-w-md mx-auto border border-gray-100 h-[520px] sm:h-[540px] flex flex-col overflow-hidden">
       {/* Header */}
       <div className="p-5 sm:p-6 border-b border-gray-100">
         <div className="flex items-center gap-3">
@@ -135,7 +149,7 @@ const SlotCard = ({ onSelectSlot }) => {
         {/* Day Selection */}
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+            <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
             <h3 className="text-base sm:text-lg font-semibold text-gray-900">
               Select Date
             </h3>
@@ -187,22 +201,23 @@ const SlotCard = ({ onSelectSlot }) => {
             <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
             Start Time
           </h4>
+
           {timeSlots.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <p className="text-sm">No slots available today</p>
-              <p className="text-xs mt-1">Please check tomorrow's slots</p>
+            <div className="text-center py-10 text-gray-500 bg-gray-50 rounded-xl">
+              <p className="text-sm font-medium">No slots available today</p>
+              <p className="text-xs mt-1">Try selecting tomorrow</p>
             </div>
           ) : (
             <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
               {timeSlots.map((slot) => (
                 <button
-                  key={slot.fullTime}
+                  key={slot.iso}
                   onClick={() => setSelectedTime(slot)}
                   className={`
                     py-2.5 sm:py-3 px-3 sm:px-4 rounded-full text-xs sm:text-sm font-medium transition-all duration-300
                     focus:outline-none focus:ring-2 focus:ring-orange-400
                     ${
-                      selectedTime?.fullTime === slot.fullTime
+                      selectedTime?.iso === slot.iso
                         ? "bg-gradient-to-r from-orange-500 to-pink-500 text-white shadow-md"
                         : "bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200"
                     }

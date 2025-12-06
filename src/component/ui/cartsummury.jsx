@@ -57,7 +57,7 @@ const CartSummary = ({ total, cartItems, customButtonText, customOnClick }) => {
             ₹{Number(total).toFixed(2)}
           </span>
 
-          <span className="border-l-2 border-white/40 flex items-center gap-3 text-[13px] md:text-xl">
+          <span className="border-white/40 flex items-center gap-3 text-[13px] md:text-xl">
             {customButtonText || "Proceed to Pay"}
             <ArrowRight className="group-hover:translate-x-1 transition-transform w-[20px] h-[20px] mr-2" />
           </span>
@@ -78,20 +78,6 @@ const CartSummary = ({ total, cartItems, customButtonText, customOnClick }) => {
               />
             </svg>
             Secure Payment
-          </span>
-          <span className="flex items-center gap-1">
-            <svg
-              className="w-4 h-4 text-green-500"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path
-                fillRule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                clipRule="evenodd"
-              />
-            </svg>
-            Fast Delivery
           </span>
         </div>
       </div>

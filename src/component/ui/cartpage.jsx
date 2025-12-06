@@ -317,9 +317,9 @@ const CartPage = () => {
   return (
     <>
       {/* Main Cart Container */}
-      <div className="w-full max-w-md mx-auto bg-white rounded-2xl shadow-xl overflow-hidden font-sans">
+      <div className="w-full max-w-md mx-auto bg-transparent overflow-hidden font-sans">
         {/* Header */}
-        <div className="py-5 sm:p-6 border-b border-gray-100 bg-gray-50/50">
+        <div className="p-5 sm:p-6 border-b border-gray-100 bg-gray-50/50">
           <h2 className="text-2xl font-bold text-gray-900 mb-1">Your Cart</h2>
           <p className="text-sm text-gray-500">Review and confirm your items</p>
 
