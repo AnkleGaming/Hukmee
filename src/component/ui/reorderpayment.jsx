@@ -14,6 +14,7 @@ import {
 import GetWallet from "../../backend/getwallet/getwallet";
 import CouponShow from "../../backend/coupon/coupon";
 import UpdateOrderstatus from "../../backend/order/updateorder";
+import UpdateWallet from "../../backend/getwallet/updatewallet";
 
 const ReorderPayment = () => {
   const { state } = useLocation();
@@ -90,40 +91,115 @@ const ReorderPayment = () => {
 
   const handlePaymentComplete = async (mode) => {
     try {
-      // Calculate total quantity
-      const totalQuantity = cartItems.reduce(
-        (sum, item) => sum + Number(item.Quantity || 1),
-        0
-      );
-
-      // Send payableAmount (after coupon + wallet) as Price
-      const result = await UpdateOrderstatus({
+      await UpdateOrderstatus({
         OrderID: orderId,
-        Price: "", // This is the final amount user pays
-        Quantity: "", // Total items count
         Status: "Onservice",
-        VendorPhone: "",
-        PaymentMethod: "",
-        Address: "",
-        Slot: "",
-        BeforVideo: "",
-        AfterVideo: "",
-        OTP: "",
-        AcptVendor: "",
         PayCustomer: mode === "Cash" ? "Cash" : "Online",
-        Coupon: selectedCoupon ? selectedCoupon.CouponCode : "",
+        PaymentMethod: "",
         FinalPrice: payableAmount,
+        Coupon: selectedCoupon ? selectedCoupon.CouponCode : "",
       });
 
-      if (result) {
-        alert(`Order placed successfully via ${mode}!`);
-        navigate("/");
-      } else {
-        alert("Failed to update order. Please try again.");
+      // Deduct wallet for Cash also (since payment is confirmed)
+      if (useWallet && walletUsed > 0) {
+        const newBalance = walletBalance - walletUsed;
+        await UpdateWallet(UserID, newBalance);
       }
+
+      alert(`Order placed successfully via ${mode}!`);
+      navigate("/");
     } catch (error) {
       console.error("Order update failed:", error);
-      alert("Payment failed. Please try again.");
+      alert("Failed. Please try again.");
+    }
+  };
+
+  const handleOnlinePayment = async () => {
+    if (payableAmount <= 0) {
+      alert("Amount is zero or invalid");
+      return;
+    }
+
+    // Load Razorpay script
+    const loadRazorpay = () => {
+      return new Promise((resolve, reject) => {
+        if (window.Razorpay) return resolve(true);
+
+        const script = document.createElement("script");
+        script.src = "https://checkout.razorpay.com/v1/checkout.js";
+        script.onload = () => resolve(true);
+        script.onerror = () => reject(new Error("Razorpay SDK failed to load"));
+        document.body.appendChild(script);
+      });
+    };
+
+    try {
+      await loadRazorpay();
+
+      const options = {
+        key: "rzp_test_RkTL7QV0DSn6sD", // Replace with your actual key
+        amount: payableAmount * 100, // in paise
+        currency: "INR",
+        name: "Hukmee",
+        description: `Reorder Payment - Order #${orderId}`,
+        image: "/logo.png", // optional
+        handler: async function (response) {
+          const paymentId = response.razorpay_payment_id;
+
+          try {
+            // Step 1: Update Order Status to "Onservice" + Save Payment Details
+            await UpdateOrderstatus({
+              OrderID: orderId,
+              Status: "Onservice",
+              PaymentMethod: "",
+              PayCustomer: "Online",
+              FinalPrice: payableAmount,
+              Coupon: selectedCoupon ? selectedCoupon.CouponCode : "",
+              PaymentID: paymentId, // Optional: store for reference
+            });
+
+            // Step 2: Deduct Wallet Amount (only if used)
+            if (useWallet && walletUsed > 0) {
+              const newBalance = walletBalance - walletUsed;
+              await UpdateWallet(UserID, newBalance);
+              console.log(`Wallet updated: ₹${walletUsed} deducted`);
+            }
+
+            // Success!
+            alert(`Payment Successful! Payment ID: ${paymentId}`);
+            navigate("/");
+          } catch (error) {
+            console.error("Post-payment update failed:", error);
+            alert(
+              "Payment successful but order update failed. Contact support with Payment ID: " +
+                paymentId
+            );
+          }
+        },
+        prefill: {
+          contact: UserID,
+          name: "Customer",
+        },
+        theme: {
+          color: "#F97316", // orange to match your design
+        },
+        modal: {
+          ondismiss: () => {
+            alert("Payment cancelled");
+          },
+        },
+      };
+
+      const razorpay = new window.Razorpay(options);
+      razorpay.on("payment.failed", function (response) {
+        alert("Payment Failed: " + (response.error.description || "Try again"));
+        console.log(response.error);
+      });
+
+      razorpay.open();
+    } catch (error) {
+      alert("Failed to load payment gateway. Check internet connection.");
+      console.error(error);
     }
   };
 
@@ -363,7 +439,7 @@ const ReorderPayment = () => {
                   </button>
                   <button
                     onClick={() => {
-                      handlePaymentComplete("Online");
+                      handleOnlinePayment();
                       setShowPaymentModal(false);
                     }}
                     className="bg-indigo-600 text-white py-3 rounded-xl font-medium active:scale-95 transition"

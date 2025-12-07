@@ -239,7 +239,7 @@ const VendorCard = ({
                   // OR even stronger: window.location.replace("/");
                 }}
               >
-                Goto Home
+                Go to Home
               </button>
               <p className="text-xl sm:text-2xl font-bold text-gray-900">
                 Total: <span className="text-orange-600">₹{totalPrice}</span>

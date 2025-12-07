@@ -3,51 +3,75 @@ import axios from "axios";
 // Enhanced Location Model
 class LocationModel {
   constructor(latitude, longitude, city, state, pincode, country, address) {
-    this.latitude = latitude;
-    this.longitude = longitude;
-    this.city = city || "Unknown City";
-    this.state = state = state || "Unknown State";
-    this.pincode = "";
-    this.country = country || "Unknown Country";
-    this.address = address || "Address not found";
+    const latNum = Number(latitude);
+    const lngNum = Number(longitude);
+    this.latitude = !isNaN(latNum) ? parseFloat(latNum.toFixed(6)) : 0;
+    this.longitude = !isNaN(lngNum) ? parseFloat(lngNum.toFixed(6)) : 0;
+    this.city = city?.trim() || "Unknown City";
+    this.state = state?.trim() || "Unknown State";
+    this.pincode = pincode || "";
+    this.country = country?.trim() || "Unknown Country";
+    this.address = address || "Location found";
+    this.isSpoofed = false;
   }
 
-  static fromJson(latitude, longitude, json) {
-    // Extract fields safely with fallbacks
+  static fromBigDataCloud(lat, lng, data) {
     const city =
-      json.city ||
-      json.locality ||
-      json.suburb ||
-      json.county ||
-      json.administrativeAreaLevel3 ||
-      "";
+      data.city ||
+      data.locality ||
+      data.suburb ||
+      data.neighbourhood ||
+      "Unknown City";
 
     const state =
-      json.principalSubdivision || json.principalSubdivisionCode || "";
+      data.principalSubdivision || data.principalSubdivisionCode || "";
+    const country = data.countryName || data.countryCode || "IN";
+    const pincode = data.postcode || "";
 
-    const country = json.countryName || json.countryCode || "";
+    const parts = [
+      data.locality,
+      data.suburb,
+      data.city,
+      state && city !== state ? state : null,
+      country,
+    ].filter(Boolean);
 
-    // Better pincode detection (India-specific mostly)
-    const pincode = json.postcode || json.postalCode || "";
+    const address = parts.length > 0 ? parts.join(", ") : "Somewhere on Earth";
 
-    // Build clean address (avoid repeating city/state)
-    let addressParts = [];
+    return new LocationModel(lat, lng, city, state, pincode, country, address);
+  }
 
-    if (json.locality && json.locality !== city)
-      addressParts.push(json.locality);
-    if (json.city && json.city !== city) addressParts.push(json.city);
-    if (city) addressParts.push(city);
+  static fromNominatim(data) {
+    const addr = data.address || {};
+    const city =
+      addr.city ||
+      addr.town ||
+      addr.village ||
+      addr.suburb ||
+      addr.hamlet ||
+      addr.state_district ||
+      "Unknown City";
 
-    if (state && state !== city) addressParts.push(state);
-    if (country) addressParts.push(country);
+    const state = addr.state || addr.province || "";
+    const country = addr.country || "India";
+    const pincode = addr.postcode || "";
 
-    const address = addressParts.filter(Boolean).join(", ") || "Location found";
+    const parts = [
+      addr.neighbourhood,
+      addr.suburb,
+      addr.village || addr.town,
+      city,
+      state !== city ? state : null,
+      country,
+    ].filter(Boolean);
+
+    const address = parts.join(", ") || "Location detected";
 
     return new LocationModel(
-      parseFloat(latitude.toFixed(6)),
-      parseFloat(longitude.toFixed(6)),
-      city.trim(),
-      state.trim(),
+      data.lat,
+      data.lon,
+      city,
+      state,
       pincode,
       country,
       address
@@ -55,56 +79,115 @@ class LocationModel {
   }
 }
 
-// MAIN FUNCTION - Improved & Reliable
-const GetLocation = async () => {
+// MAIN FIXED FUNCTION - NO MORE HOISTING ERROR
+const GetLocation = async (mockLat = null, mockLng = null) => {
   return new Promise((resolve, reject) => {
+    let latitude = null;
+    let longitude = null;
+
+    // THIS FUNCTION MUST BE DEFINED BEFORE ANY CALL TO IT
+    const continueWithCoords = async () => {
+      if (!latitude || !longitude) {
+        return reject("Invalid coordinates");
+      }
+
+      try {
+        // TRY 1: BigDataCloud API
+        try {
+          const url = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`;
+          const { data } = await axios.get(url, { timeout: 8000 });
+
+          if (data.city || data.locality) {
+            const loc = LocationModel.fromBigDataCloud(
+              latitude,
+              longitude,
+              data
+            );
+            loc.isSpoofed = !!mockLat;
+            return resolve(loc);
+          }
+        } catch (e) {
+          console.log("BigDataCloud failed → trying Nominatim...");
+        }
+
+        // TRY 2: Nominatim (OpenStreetMap) — Best for spoofed/fake GPS
+        try {
+          const nomUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`;
+          const { data } = await axios.get(nomUrl, {
+            headers: { "User-Agent": "MyApp/1.0 (+https://yourapp.com)" },
+            timeout: 10000,
+          });
+
+          if (data?.address) {
+            const loc = LocationModel.fromNominatim(data);
+            loc.latitude = parseFloat(latitude);
+            loc.longitude = parseFloat(longitude);
+            loc.isSpoofed = !!mockLat;
+            return resolve(loc);
+          }
+        } catch (e) {
+          console.log("Nominatim also failed");
+        }
+
+        // FINAL FALLBACK
+        resolve(
+          new LocationModel(
+            latitude,
+            longitude,
+            "Custom Location",
+            "Detected Area",
+            "",
+            "Earth",
+            "Location detected via GPS"
+          )
+        );
+      } catch (err) {
+        reject("All location services failed");
+      }
+    };
+
+    // ———— MAIN FLOW STARTS HERE ————
+
+    // Case 1: Manual mock location (for testing or spoofing)
+    if (mockLat !== null && mockLng !== null) {
+      latitude = mockLat;
+      longitude = mockLng;
+      continueWithCoords();
+      return;
+    }
+
+    // Case 2: Use browser geolocation
     if (!navigator.geolocation) {
-      return reject("Geolocation is not supported by this browser.");
+      reject("Geolocation is not supported by your browser");
+      return;
     }
 
     navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
+      (position) => {
+        latitude = position.coords.latitude;
+        longitude = position.coords.longitude;
+        continueWithCoords();
+      },
+      async (error) => {
+        console.warn(
+          "Browser GPS failed, trying IP fallback...",
+          error.message
+        );
 
         try {
-          const url = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`;
-
-          const response = await axios.get(url);
-          const data = response.data;
-
-          console.log("Full API Response:", data); // Debug this once
-
-          // Use improved parser
-          const location = LocationModel.fromJson(latitude, longitude, data);
-
-          // Final result example:
-          // city: "New Delhi"
-          // state: "Delhi"
-          // pincode: "110001"
-          // address: "Connaught Place, New Delhi, Delhi, India"
-
-          resolve(location);
-        } catch (error) {
-          console.error("API Error:", error.response?.data || error.message);
-          reject("Unable to fetch location details. Try again.");
+          const { data } = await axios.get("https://ipapi.co/json/");
+          latitude = data.latitude;
+          longitude = data.longitude;
+          continueWithCoords();
+        } catch {
+          reject("No location access. Allow location or spoof GPS.");
         }
       },
-      (error) => {
-        let message = "Location access denied or error occurred.";
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            message = "Location access denied by user.";
-            break;
-          case error.POSITION_UNAVAILABLE:
-            message = "Location information is unavailable.";
-            break;
-          case error.TIMEOUT:
-            message = "Location request timed out.";
-            break;
-        }
-        reject(message);
-      },
-      { timeout: 10000, enableHighAccuracy: true } // Better options
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 600000,
+      }
     );
   });
 };
