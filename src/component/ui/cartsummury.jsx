@@ -53,11 +53,11 @@ const CartSummary = ({ total, cartItems, customButtonText, customOnClick }) => {
           {/* Shiny effect */}
           <div className="absolute inset-0 bg-white opacity-20 translate-x-[-100%] group-hover:translate-x-full transition-transform duration-1000" />
 
-          <span className="text-[13px] md:text-xl ">
+          <span className="text-[13px] md:text-[15px ] font-medium flex items-center gap-3">
             ₹{Number(total).toFixed(2)}
           </span>
 
-          <span className="border-white/40 flex items-center gap-3 text-[13px] md:text-xl">
+          <span className="border-white/40 flex items-center gap-3 text-[13px] md:text-[15px] font-medium">
             {customButtonText || "Proceed to Pay"}
             <ArrowRight className="group-hover:translate-x-1 transition-transform w-[20px] h-[20px] mr-2" />
           </span>

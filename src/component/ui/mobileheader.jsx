@@ -121,7 +121,7 @@ const MobileHeader = () => {
     <>
       {/* Top Logo Bar */}
       <div>
-        <div
+        {/* <div
           onClick={() => navigate("/")}
           className="flex items-start cursor-pointer p-[5px] ml-[10px]"
         >
@@ -130,7 +130,7 @@ const MobileHeader = () => {
             alt="WePrettify Logo"
             className="w-45 h-30 rounded-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
-        </div>
+        </div> */}
 
         {/* Main Header */}
         <header className="sticky top-0 z-10 bg-white shadow-sm border-b border-gray-200">

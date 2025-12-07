@@ -81,7 +81,6 @@ const HeroSection = () => {
           {/* Left Side - Content */}
           <div className="w-full lg:w-[95%] flex flex-col items-center lg:items-start text-center lg:text-left">
             {isMobile && <MobileHeader />}
-            <MobileDetect />
             {isMobile && (
               <div className="w-full px-4 pt-4">
                 <Slider
@@ -94,6 +93,7 @@ const HeroSection = () => {
                 />
               </div>
             )}
+            <MobileDetect />
             <div className="mt-6">
               <ServiceCard onServiceSelect={handleServiceClick} />
             </div>
@@ -164,11 +164,11 @@ const Slider = ({ images, loading, currentSlide, goPrev, goNext, goTo }) => {
               style={{ transform: `translateX(-${currentSlide * 100}%)` }}
             >
               {images.map((img, idx) => (
-                <div key={idx} className="w-full h-full flex-shrink-0">
+                <div key={idx} className="w-full h-full flex-shrink-0 ">
                   <img
                     src={img}
                     alt={`Slide ${idx + 1}`}
-                    className="w-full h-full object-contain"
+                    className="w-full h-full object-contain "
                     onError={(e) => (e.currentTarget.src = "/placeholder.jpg")}
                   />
                 </div>

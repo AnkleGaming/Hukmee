@@ -41,6 +41,7 @@ const SkeletonOTP = () => (
 const OTPCard = ({ otp = "", mask = false, expirySeconds = 300 }) => {
   const [copied, setCopied] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(expirySeconds);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!secondsLeft) return;
@@ -114,6 +115,7 @@ const VendorCard = ({
   isAccepted,
   vendorDetails,
   isVendorLoading,
+  expired,
 }) => {
   const totalPrice = vendorData
     .reduce(
@@ -222,10 +224,41 @@ const VendorCard = ({
 
           {/* Total Price */}
           {vendorData.length > 0 && (
-            <div className="mt-6 pt-4 border-t border-gray-300 text-right">
+            <div className="flex flex-row justify-between mt-6 pt-4 border-t border-gray-300 text-right">
+              <button
+                className="bg-orange-500 hover:bg-orange-600 text-white font-medium px-6 py-3 rounded-lg transition shadow-md active:scale-95"
+                onClick={() => {
+                  // Clean up any running timers
+                  if (typeof window !== "undefined") {
+                    window.clearInterval?.(window.pollInterval);
+                    window.clearTimeout?.(window.countdownRef?.current);
+                  }
+
+                  // MOST RELIABLE WAY — Works 100% on mobile + desktop + PWA
+                  window.location.href = "/";
+                  // OR even stronger: window.location.replace("/");
+                }}
+              >
+                Goto Home
+              </button>
               <p className="text-xl sm:text-2xl font-bold text-gray-900">
                 Total: <span className="text-orange-600">₹{totalPrice}</span>
               </p>
+            </div>
+          )}
+
+          {expired && !isAccepted && (
+            <div className="mt-6 p-5 bg-red-50 border border-red-200 rounded-xl text-center">
+              <p className="text-red-700 font-semibold text-lg mb-3">
+                Vendor did not accept your order.
+              </p>
+
+              <button
+                onClick={() => (window.location.href = "/")}
+                className="px-6 py-3 bg-orange-500 text-white rounded-lg font-medium shadow hover:cursor-pointer hover:bg-orange-600 transition"
+              >
+                Go to Home
+              </button>
             </div>
           )}
         </>
@@ -277,6 +310,7 @@ const VendorWait = () => {
   const [isVendorLoading, setIsVendorLoading] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(120);
   const [userLocation, setUserLocation] = useState(null);
+  const [expired, setExpired] = useState(false);
 
   // refs & flags
   const pollTimeoutRef = useRef(null);
@@ -322,7 +356,7 @@ const VendorWait = () => {
       setSecondsLeft((prev) => {
         if (prev <= 1) {
           clearInterval(countdownRef.current);
-          navigate("/", { replace: true });
+          setExpired(true); // ❗ mark as expired instead of navigating
           return 0;
         }
         return prev - 1;
@@ -332,7 +366,7 @@ const VendorWait = () => {
     return () => {
       if (countdownRef.current) clearInterval(countdownRef.current);
     };
-  }, [navigate]);
+  }, []);
 
   // polling with location
   // POLLING — FIXED FOR MOBILE
@@ -567,7 +601,9 @@ const VendorWait = () => {
       <div className="flex-1 flex items-center justify-center px-4 py-24 md:py-32">
         <VendorCard
           title={
-            isAccepted
+            expired
+              ? "No Vendor Accepted"
+              : isAccepted
               ? "Vendor Accepted!"
               : `Finding Vendor... (${secondsLeft}s)`
           }
@@ -576,6 +612,7 @@ const VendorWait = () => {
           isAccepted={isAccepted}
           vendorDetails={vendorDetails}
           isVendorLoading={isVendorLoading}
+          expired={expired} // ⭐ MUST ADD
         />
       </div>
 

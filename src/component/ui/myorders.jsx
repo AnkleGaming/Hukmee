@@ -122,14 +122,7 @@ const MyOrder = () => {
           {/* Responsive Filter Tabs */}
           <div className="mt-4 flex justify-center">
             <div className="inline-flex bg-gray-50 rounded-xl shadow-inner p-4 overflow-x-auto scrollbar-hide gap-1">
-              {[
-                "All",
-                "Pending",
-                "Placed",
-                "Accepted",
-                "Cancelled",
-                "Completed",
-              ].map((f) => (
+              {["All", "Completed"].map((f) => (
                 <button
                   key={f}
                   onClick={() => setFilter(f)}
@@ -139,7 +132,7 @@ const MyOrder = () => {
                       : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
                   }`}
                 >
-                  {f === "All" ? "All Orders" : f}
+                  {f === "All" ? "Orders" : f}
                 </button>
               ))}
             </div>

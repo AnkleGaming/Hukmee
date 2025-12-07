@@ -103,7 +103,7 @@ const ReorderPayment = () => {
         Quantity: totalQuantity, // Total items count
         Status: "Onservice",
         VendorPhone: "",
-        PaymentMethod: mode === "Cash" ? "Cash" : "Online",
+        PaymentMethod: "",
         // Optional fields (keep empty if not needed)
         Address: "",
         Slot: "",
@@ -135,7 +135,7 @@ const ReorderPayment = () => {
   return (
     <>
       <div className="min-h-screen bg-gray-50">
-        <div className="max-w-md mx-auto px-4 pt-5  pb-24">
+        <div className="max-w-md mx-auto px-4 pt-5 mt-5 pb-24">
           {/* Header */}
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-2">
