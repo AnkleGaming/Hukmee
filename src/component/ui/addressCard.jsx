@@ -12,15 +12,24 @@ const AddressFormCard = ({ onClose, onSelectAddress }) => {
     city: "",
     pincode: "",
   });
+
+  const [pincodeError, setPincodeError] = useState(""); // Only for pincode error
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [isOpen, setIsOpen] = useState(true);
   const [addresses, setAddresses] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [selectedAddressId, setSelectedAddressId] = useState(null);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
   const phone = localStorage.getItem("userPhone");
   const [user, setUser] = useState([]);
+
+  // Pincode Validation: Exactly 6 digits only
+  const validatePincode = (value) => {
+    const pin = value.trim();
+    if (!pin) return "Pincode is required";
+    if (!/^\d{6}$/.test(pin)) return "Pincode must be exactly 6 digits";
+    return "";
+  };
 
   useEffect(() => {
     const fetchAddresses = async () => {
@@ -28,53 +37,92 @@ const AddressFormCard = ({ onClose, onSelectAddress }) => {
         const fetchedAddresses = await GetAddress(phone);
         setAddresses(fetchedAddresses || []);
       } catch (error) {
-        console.error("Error fetching addresses:", error);
-        setMessage("Failed to load addresses. Please try again later.");
+        setMessage("Failed to load addresses.");
       }
     };
     fetchAddresses();
-  }, []);
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 640);
-    };
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  }, [phone]);
 
   useEffect(() => {
     const fetchuser = async () => {
+      if (!phone) return;
       try {
         const fetchedUser = await GetUser(phone);
-        console.log("Fetched from the Navigation ", { fetchedUser });
         setUser(fetchedUser || []);
       } catch (error) {
         console.error("Error fetching user:", error);
       }
     };
-    if (phone) fetchuser();
+    fetchuser();
   }, [phone]);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+
+    if (name === "pincode") {
+      // Allow only numbers and max 6 digits
+      const numericValue = value.replace(/[^0-9]/g, "").slice(0, 6);
+      setFormData({ ...formData, pincode: numericValue });
+
+      // Validate live
+      const error = validatePincode(numericValue);
+      setPincodeError(error);
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
+  };
+
+  const handleLocationFetch = async () => {
+    setMessage("Getting current location...");
+
+    try {
+      const location = await GetLocation();
+
+      const cleanPincode = (location.pincode || "").toString().slice(0, 6);
+
+      setFormData((prev) => ({
+        ...prev,
+        name: user[0]?.Fullname || "",
+        address: location.address || "",
+        city: location.city || "",
+        state: location.state || "",
+        pincode: cleanPincode,
+      }));
+
+      // Validate auto-filled pincode
+      setPincodeError(validatePincode(cleanPincode));
+
+      setMessage(`Location fetched: ${location.city}`);
+    } catch (error) {
+      setMessage("Failed to get location.");
+      setPincodeError("");
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage("");
+
+    // Final pincode check
+    const error = validatePincode(formData.pincode);
+    if (error) {
+      setPincodeError(error);
+      setMessage("Please enter a valid 6-digit pincode");
+      return;
+    }
+
     setIsLoading(true);
+    setMessage("");
 
     try {
       const response = await InsertAddress(
-        formData.name,
+        formData.name || user[0]?.Fullname,
         phone,
         formData.address,
         formData.city,
         formData.pincode
       );
-      if (response && response.message === "Inserted Successfully!") {
+
+      if (response?.message === "Inserted Successfully!") {
         setMessage("Address saved successfully!");
         setFormData({
           name: "",
@@ -83,20 +131,22 @@ const AddressFormCard = ({ onClose, onSelectAddress }) => {
           city: "",
           pincode: "",
         });
-        const fetchedAddresses = await GetAddress(phone);
-        setAddresses(fetchedAddresses || []);
-        setShowForm(false);
+        setPincodeError("");
+
+        const updated = await GetAddress(phone);
+        setAddresses(updated || []);
+
         setTimeout(() => {
+          setShowForm(false);
           setIsOpen(false);
           onClose?.();
         }, 1500);
       } else {
-        setMessage("Failed to save address. Please try again.");
-        setIsLoading(false);
+        setMessage("Failed to save address.");
       }
     } catch (error) {
-      console.error("Error saving address:", error);
-      setMessage("An error occurred while saving the address.");
+      setMessage("Error saving address.");
+    } finally {
       setIsLoading(false);
     }
   };
@@ -108,74 +158,44 @@ const AddressFormCard = ({ onClose, onSelectAddress }) => {
     onClose?.();
   };
 
-  const handleLocationFetch = async () => {
-    setMessage("📡 Getting current location...");
-
-    try {
-      const location = await GetLocation(); // calls your backend API
-      console.log("📍 Location Data:", location);
-
-      setFormData((prev) => ({
-        ...prev,
-        name: user[0]?.Fullname || "",
-        address: location.address,
-        city: location.city,
-        state: location.state,
-        pincode: location.pincode,
-      }));
-
-      setMessage(
-        `✅ Location fetched successfully! (${location.city || "Unknown City"})`
-      );
-    } catch (error) {
-      console.error("Location Fetch Error:", error);
-      setMessage("❌ Failed to fetch your current location.");
-    }
-  };
-
-  if (!isOpen) {
-    return null;
-  }
+  if (!isOpen) return null;
 
   return (
     <div
-      className={`max-w-md mx-auto p-6 sm:p-8 bg-transparent rounded-2xl border border-gray-100 font-sans transition-all duration-500 h-[450px] ${
-        isOpen ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4"
-      }`}
+      className={`max-w-md mx-auto p-6 sm:p-8 bg-white rounded-2xl border border-gray-100 font-sans shadow-xl`}
     >
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-orange-600 to-orange-700 bg-clip-text text-transparent">
-          Add New Address
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-orange-700 bg-clip-text text-transparent">
+          Delivery Address
         </h2>
         {!showForm && (
           <button
             onClick={() => setShowForm(true)}
-            className="p-2 bg-orange-600 text-white rounded-full hover:bg-orange-700 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-orange-400"
-            title="Add New Address"
+            className="p-3 bg-orange-600 text-white rounded-full hover:bg-orange-700 transition"
           >
             <svg
               className="h-6 w-6"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
             >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth="2"
                 d="M12 4v16m8-8H4"
-              ></path>
+              />
             </svg>
           </button>
         )}
       </div>
-      <div className="max-h-[calc(100%-3rem)] overflow-y-auto hide-scrollbar">
-        {showForm && (
+
+      <div className="max-h-96 overflow-y-auto hide-scrollbar">
+        {showForm ? (
           <>
             {message && (
               <div
-                className={`mb-4 p-3 rounded-lg ${
+                className={`mb-4 p-3 rounded-lg text-sm ${
                   message.includes("success")
                     ? "bg-green-100 text-green-800"
                     : "bg-red-100 text-red-800"
@@ -184,200 +204,142 @@ const AddressFormCard = ({ onClose, onSelectAddress }) => {
                 {message}
               </div>
             )}
-            <form onSubmit={handleSubmit} className="space-y-5 p-3">
-              <div className="mb-4">
-                <button
-                  type="button"
-                  onClick={handleLocationFetch}
-                  className="w-full py-2 mb-2 bg-orange-600 text-white font-medium rounded-lg hover:bg-orange-700 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-orange-400"
-                >
-                  📍 Use Current Location
-                </button>
 
-                {message && (
-                  <p className="text-sm mt-2 text-gray-700">{message}</p>
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <button
+                type="button"
+                onClick={handleLocationFetch}
+                className="w-full py-3 bg-orange-600 text-white font-medium rounded-lg hover:bg-orange-700 transition"
+              >
+                Use Current Location
+              </button>
+
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                placeholder="Full Name"
+                className="w-full p-3 border border-gray-200 rounded-lg"
+                required
+              />
+
+              <textarea
+                name="address"
+                rows={3}
+                value={formData.address}
+                onChange={handleChange}
+                placeholder="House no, Street, Landmark"
+                className="w-full p-3 border border-gray-200 rounded-lg"
+                required
+              />
+
+              <div className="grid grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  name="state"
+                  value={formData.state}
+                  onChange={handleChange}
+                  placeholder="State"
+                  className="p-3 border border-gray-200 rounded-lg"
+                  required
+                />
+                <input
+                  type="text"
+                  name="city"
+                  value={formData.city}
+                  onChange={handleChange}
+                  placeholder="City"
+                  className="p-3 border border-gray-200 rounded-lg"
+                  required
+                />
+              </div>
+
+              {/* PINCODE FIELD WITH VALIDATION */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-800 mb-1">
+                  Pincode <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="pincode"
+                  value={formData.pincode}
+                  onChange={handleChange}
+                  placeholder="800001"
+                  maxLength="6"
+                  className={`w-full p-3 border rounded-lg transition-all ${
+                    pincodeError
+                      ? "border-red-500 focus:ring-red-300"
+                      : "border-gray-200 focus:ring-orange-500"
+                  }`}
+                  required
+                />
+                {pincodeError && (
+                  <p className="text-red-600 text-xs mt-1 flex items-center">
+                    {pincodeError}
+                  </p>
                 )}
               </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-1.5">
-                  Full Name
-                </label>
-                <input
-                  name="name"
-                  type="text"
-                  value={formData.name}
-                  onChange={handleChange}
-                  className="w-full p-3 border border-gray-200 rounded-lg bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-300"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-1.5">
-                  Address
-                </label>
-                <textarea
-                  name="address"
-                  rows={3}
-                  value={formData.address}
-                  onChange={handleChange}
-                  className="w-full p-3 border border-gray-200 rounded-lg bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-300"
-                  required
-                ></textarea>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-800 mb-1.5">
-                    State
-                  </label>
-                  <input
-                    name="state"
-                    type="text"
-                    value={formData.state}
-                    onChange={handleChange}
-                    className="w-full p-3 border border-gray-200 rounded-lg bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-300"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-800 mb-1.5">
-                    City
-                  </label>
-                  <input
-                    name="city"
-                    type="text"
-                    value={formData.city}
-                    onChange={handleChange}
-                    className="w-full p-3 border border-gray-200 rounded-lg bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-300"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-1.5">
-                  Pincode
-                </label>
-                <input
-                  name="pincode"
-                  type="text"
-                  value={formData.pincode}
-                  onChange={handleChange}
-                  className="w-full p-3 border border-gray-200 rounded-lg bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-300"
-                  required
-                />
-              </div>
-
-              <div className="flex justify-between">
+              <div className="flex gap-3">
                 <button
                   type="submit"
-                  disabled={isLoading}
-                  className={`py-3 px-4 bg-gradient-to-r from-orange-600 to-orange-700 text-white font-semibold rounded-lg hover:from-orange-700 hover:to-orange-800 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-orange-400 flex items-center justify-center ${
-                    isLoading ? "opacity-50 cursor-not-allowed" : ""
+                  disabled={isLoading || pincodeError}
+                  className={`flex-1 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition ${
+                    isLoading || pincodeError
+                      ? "opacity-60 cursor-not-allowed"
+                      : ""
                   }`}
                 >
-                  {isLoading ? (
-                    <>
-                      <svg
-                        className="animate-spin h-5 w-5 mr-2 text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
-                      Saving...
-                    </>
-                  ) : (
-                    "Save Address"
-                  )}
+                  {isLoading ? "Saving..." : "Save Address"}
                 </button>
                 <button
                   type="button"
-                  onClick={() => setShowForm(false)}
-                  className="py-3 px-4 text-sm font-medium text-orange-600 hover:text-orange-800 bg-orange-50/50 hover:bg-orange-100 rounded-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-orange-300"
+                  onClick={() => {
+                    setShowForm(false);
+                    setPincodeError("");
+                    setMessage("");
+                  }}
+                  className="px-6 py-3 border border-orange-600 text-orange-600 rounded-lg hover:bg-orange-50"
                 >
                   Cancel
                 </button>
               </div>
             </form>
           </>
-        )}
-
-        <div className="mt-8">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">
-            Saved Addresses
-          </h3>
-          {addresses.length === 0 ? (
-            <p className="text-gray-600">No addresses found.</p>
-          ) : (
-            <div className="space-y-4">
-              {addresses.map((address) => (
-                <div
-                  key={address.id}
-                  className={`p-4 bg-gray-50/50 border rounded-lg shadow-sm cursor-pointer transition-all duration-300 ${
-                    selectedAddressId === address.id
-                      ? "border-orange-500 bg-orange-50/50"
-                      : "border-gray-200 hover:border-orange-300"
-                  }`}
-                  onClick={() => handleSelectAddress(address)}
-                >
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="text-sm font-medium text-gray-800">
-                        <span className="font-semibold">Name:</span>{" "}
-                        {address.Name}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        <span className="font-semibold">Address:</span>{" "}
-                        {address.Address}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        <span className="font-semibold">City:</span>{" "}
-                        {address.City}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        <span className="font-semibold">Pincode:</span>{" "}
-                        {address.PinCode}
-                      </p>
-                    </div>
-                    {selectedAddressId === address.id && (
-                      <svg
-                        className="h-5 w-5 text-orange-600"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                          clipRule="evenodd"
-                        ></path>
-                      </svg>
-                    )}
+        ) : (
+          <div className="mt-6">
+            <h3 className="text-lg font-semibold mb-4">Saved Addresses</h3>
+            {addresses.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">
+                No addresses saved yet
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {addresses.map((address) => (
+                  <div
+                    key={address.id}
+                    onClick={() => handleSelectAddress(address)}
+                    className={`p-4 rounded-lg border-2 cursor-pointer transition ${
+                      selectedAddressId === address.id
+                        ? "border-orange-500 bg-orange-50"
+                        : "border-gray-200 hover:border-orange-300"
+                    }`}
+                  >
+                    <p className="font-semibold">{address.Name}</p>
+                    <p className="text-sm text-gray-600">{address.Address}</p>
+                    <p className="text-sm text-gray-600">
+                      {address.City}, {address.PinCode}
+                    </p>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
 };
+
 export default AddressFormCard;
