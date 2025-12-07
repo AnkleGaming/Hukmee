@@ -12,6 +12,10 @@ const UpdateOrder = async ({
   AfterVideo = "",
   OTP = "",
   PaymentMethod = "",
+  AcptVendor = "",
+  PayCustomer = "",
+  Coupon = "",
+  FinalPrice = "",
 }) => {
   const formData = new URLSearchParams();
   formData.append("token", "SWNCMPMSREMXAMCKALVAALI");
@@ -26,6 +30,10 @@ const UpdateOrder = async ({
   formData.append("AfterVideo", AfterVideo);
   formData.append("OTP", OTP);
   formData.append("PaymentMethod", PaymentMethod);
+  formData.append("AcptVendor", AcptVendor);
+  formData.append("PayCustomer", PayCustomer);
+  formData.append("Coupon", Coupon);
+  formData.append("FinalPrice", FinalPrice);
 
   try {
     const response = await axios.post(

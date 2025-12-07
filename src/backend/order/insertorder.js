@@ -20,6 +20,10 @@ const InsertOrder = async ({
   lat = "",
   long = "",
   Status = "",
+  AcptVendor = "",
+  PayCustomer = "",
+  Coupon = "",
+  FinalPrice = "",
 }) => {
   const formData = new URLSearchParams();
   formData.append("token", "SWNCMPMSREMXAMCKALVAALI");
@@ -42,6 +46,10 @@ const InsertOrder = async ({
   formData.append("lat", lat);
   formData.append("lon", long);
   formData.append("Status", Status);
+  formData.append("AcptVendor", AcptVendor);
+  formData.append("PayCustomer", PayCustomer);
+  formData.append("Coupon", Coupon);
+  formData.append("FinalPrice", FinalPrice);
 
   try {
     const response = await axios.post(

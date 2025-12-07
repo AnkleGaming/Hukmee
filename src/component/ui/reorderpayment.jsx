@@ -99,17 +99,20 @@ const ReorderPayment = () => {
       // Send payableAmount (after coupon + wallet) as Price
       const result = await UpdateOrderstatus({
         OrderID: orderId,
-        Price: payableAmount, // This is the final amount user pays
-        Quantity: totalQuantity, // Total items count
+        Price: "", // This is the final amount user pays
+        Quantity: "", // Total items count
         Status: "Onservice",
         VendorPhone: "",
         PaymentMethod: "",
-        // Optional fields (keep empty if not needed)
         Address: "",
         Slot: "",
         BeforVideo: "",
         AfterVideo: "",
         OTP: "",
+        AcptVendor: "",
+        PayCustomer: mode === "Cash" ? "Cash" : "Online",
+        Coupon: selectedCoupon ? selectedCoupon.CouponCode : "",
+        FinalPrice: payableAmount,
       });
 
       if (result) {
