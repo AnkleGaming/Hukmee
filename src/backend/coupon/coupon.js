@@ -22,9 +22,10 @@ class CouponShowModel {
   }
 }
 
-const CouponShow = async () => {
+const CouponShow = async (phone) => {
   const formData = new URLSearchParams();
   formData.append("token", "SWNCMPMSREMXAMCKALVAALI");
+  formData.append("phoneNumber", phone);
 
   try {
     const response = await axios.post(

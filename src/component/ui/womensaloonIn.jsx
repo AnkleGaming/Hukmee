@@ -298,6 +298,11 @@ const WomenSaloonIn = () => {
       return;
     }
 
+    if (orderType === "Product") {
+      setShowCart(true);
+      return;
+    }
+
     if (isProcessingAdd) return;
     setIsProcessingAdd(true);
 
@@ -830,14 +835,14 @@ const WomenSaloonIn = () => {
                       <motion.button
                         onClick={() => {
                           setShowCart(false);
-                          setShowLoginCard(true);
+                          navigate("/cartpage");
                         }}
                         className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-200"
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         aria-label="Proceed to login"
                       >
-                        Log In
+                        Cart
                       </motion.button>
                       <motion.button
                         onClick={() => setShowCart(false)}

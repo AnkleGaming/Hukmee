@@ -159,9 +159,9 @@ const MobileDetect = () => {
   );
 
   return isMobile ? (
-    <DeviceCard title="📱 Your Device" subtitle="Detected on mobile" />
+    <DeviceCard title=" Your Device" subtitle="Detected on mobile" />
   ) : (
-    <DeviceCard title="💻 Your Device Model" subtitle="Running on desktop" />
+    <DeviceCard title=" Your Device Model" subtitle="Running on desktop" />
   );
 };
 

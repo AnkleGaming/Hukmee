@@ -26,6 +26,7 @@ import ScrollToTop from "./component/context/scrolltop";
 import UsedProduct from "./component/ui/usedproduct";
 import RegisterPage from "./component/ui/register";
 import VendorWait from "./component/ui/vendorwait";
+import ReorderPayment from "./component/ui/reorderpayment";
 
 const queryClient = new QueryClient();
 
@@ -105,6 +106,7 @@ const App = () => {
               <Route path="/usedproduct" element={<UsedProduct />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/vendorwait" element={<VendorWait />} />
+              <Route path="/reorder-payment" element={<ReorderPayment />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Layout>

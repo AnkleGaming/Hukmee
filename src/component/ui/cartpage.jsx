@@ -216,6 +216,14 @@ const CartPage = () => {
     }
   };
 
+  const handleUpdateItems = () => {
+    navigate("/reorder-payment", {
+      state: {
+        cartData: pending1, // This sends your Pending1 items directly
+      },
+    });
+  };
+
   // Open Payment Modal when "Update Items" is clicked
   const openPaymentModal = () => {
     const orderId = pending1[0]?.OrderID || "N/A";
@@ -515,7 +523,7 @@ const CartPage = () => {
               }
               customOnClick={
                 activeTab === "reorder" || hiddenCartBecauseReorder
-                  ? openPaymentModal
+                  ? handleUpdateItems
                   : undefined
               }
             />

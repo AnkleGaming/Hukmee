@@ -229,8 +229,14 @@ const MobileCartSummary = () => {
           {hasReorder && (
             <div className="flex items-center gap-3">
               <button
-                onClick={openPaymentModal}
-                className="flex-1 text-center bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-2xl font-medium text-lg shadow-2xl active:scale-98 transition-all border border-white/30"
+                onClick={() => {
+                  navigate("/reorder-payment", {
+                    state: {
+                      cartData: pending1, // This sends your Pending1 items directly
+                    },
+                  });
+                }}
+                className="flex-1 text-center bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white px-6 py-3 rounded-2xl font-medium text-lg shadow-2xl active:scale-98 transition-all border border-white/30 backdrop-blur-sm"
               >
                 Update Items ({pending1Qty} Item{pending1Qty !== 1 ? "s" : ""})
               </button>
@@ -241,7 +247,7 @@ const MobileCartSummary = () => {
           )}
 
           {/* Normal Cart: Proceed Button */}
-          {hasNormalCart && (
+          {hasNormalCart && !hasReorder && (
             <div className="flex items-center gap-3">
               <button
                 onClick={handleProceed}
