@@ -90,6 +90,19 @@ const PaymentCard = ({
     fetchCartOrders(); // Refresh order type after login
   };
 
+  useEffect(() => {
+    const openLoginModal = () => {
+      setShowLoginModal(true);
+      setShowOtpModal(false);
+    };
+
+    window.addEventListener("open-login-modal", openLoginModal);
+
+    return () => {
+      window.removeEventListener("open-login-modal", openLoginModal);
+    };
+  }, []);
+
   const isProduct = orderType === "Product";
 
   // Address always required; Slot only for services
